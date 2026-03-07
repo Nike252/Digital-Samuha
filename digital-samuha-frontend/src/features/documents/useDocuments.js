@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { documentsAPI, attendanceAPI, samuhaAPI } from '../../utils/api';
+import { documentsAPI, attendanceAPI, samuhaAPI, ledgerAPI } from '../../utils/api';
 import { useUI } from '../../context/UIContext';
 
 const useDocuments = (user) => {
@@ -8,6 +8,7 @@ const useDocuments = (user) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [documents, setDocuments] = useState([]);
   const [meetings, setMeetings] = useState([]);
+  const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
@@ -17,14 +18,16 @@ const useDocuments = (user) => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [docRes, meetRes, samuhaRes] = await Promise.all([
+      const [docRes, meetRes, samuhaRes, loanRes] = await Promise.all([
         documentsAPI.getDocuments(),
         attendanceAPI.getMeetings(),
-        samuhaAPI.getSamuhaDetails()
+        samuhaAPI.getSamuhaDetails(),
+        ledgerAPI.getLoans()
       ]);
-      setDocuments(docRes.data);
-      setMeetings(meetRes.data);
-      setSamuhaDetails(samuhaRes.data);
+      setDocuments(docRes.data || []);
+      setMeetings(meetRes.data || []);
+      setSamuhaDetails(samuhaRes.data || null);
+      setLoans(loanRes.data || []);
     } catch (err) {
       console.error("Error fetching documents data:", err);
     } finally {
@@ -84,6 +87,7 @@ const useDocuments = (user) => {
     searchTerm, setSearchTerm,
     documents, setDocuments,
     meetings, setMeetings,
+    loans, setLoans,
     loading, setLoading,
     isUploadModalOpen, setIsUploadModalOpen,
     selectedReport, setSelectedReport,
