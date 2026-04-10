@@ -1,5 +1,6 @@
 import React from 'react';
 import { User, Calendar } from 'lucide-react';
+import { toBS } from '../../utils/nepaliDateUtils';
 
 const SamuhaRegistryTable = ({ 
   activeTab, 
@@ -54,7 +55,7 @@ const SamuhaRegistryTable = ({
               )}
               <td className="px-6 py-5 text-gray-500 text-sm">
                 <div className="flex items-center gap-1">
-                  <Calendar size={14} /> {new Date(s.created_at).toLocaleDateString()}
+                  <Calendar size={14} /> {toBS(s.created_at)}
                 </div>
               </td>
               <td className="px-6 py-5 text-center">

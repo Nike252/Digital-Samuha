@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { samuhaAPI, notificationsAPI } from '../../utils/api';
+import { toBS } from '../../utils/nepaliDateUtils';
 import { 
   Bell, 
   User, 
@@ -150,7 +151,7 @@ export const NotificationMenu = ({ isOpen, onClose, isDark }) => {
                   <p className={`text-[13px] font-black truncate leading-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{notif.title}</p>
                   <p className={`text-[11px] mt-1 line-clamp-2 leading-relaxed ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{notif.message}</p>
                   <div className="flex items-center gap-2 mt-2.5">
-                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400/60">{new Date(notif.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400/60">{toBS(notif.created_at, 'monthDay')}</p>
                     <span className="w-1 h-1 bg-gray-300 rounded-full" />
                     <p className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400/60">{new Date(notif.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</p>
                   </div>

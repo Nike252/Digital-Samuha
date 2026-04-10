@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search, FileText, Download, Trash2 } from 'lucide-react';
+import { toBS } from '../../utils/nepaliDateUtils';
 
 const ArchiveSection = ({ 
   searchTerm, 
@@ -53,7 +54,7 @@ const ArchiveSection = ({
                   </span>
                 </td>
                 <td className="px-6 py-4 text-gray-500 text-sm font-medium whitespace-nowrap">
-                  {new Date(doc.created_at).toLocaleDateString()}
+                  {toBS(doc.created_at)}
                 </td>
                 <td className="px-6 py-4 text-right whitespace-nowrap">
                   <div className="flex items-center justify-end gap-2">

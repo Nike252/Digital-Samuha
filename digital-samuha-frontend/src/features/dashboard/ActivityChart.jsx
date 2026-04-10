@@ -1,24 +1,24 @@
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { getBSMonthYear, MONTHS_BS, getCurrentBSDate } from '../../utils/nepaliDateUtils';
 
 const ActivityChart = ({ transactions = [] }) => {
   // Process transactions into chart data
   const processChartData = () => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const currentMonth = new Date().getMonth();
+    const currentBS = getCurrentBSDate();
+    const currentMonth = currentBS.month - 1; // 0-indexed for logic
     
-    // Initialize last 6 months
+    // Initialize last 6 months (BS)
     const chartData = [];
     for (let i = 5; i >= 0; i--) {
         const m = (currentMonth - i + 12) % 12;
-        chartData.push({ name: months[m], savings: 0, loans: 0, monthIndex: m });
+        chartData.push({ name: MONTHS_BS[m], savings: 0, loans: 0, monthIndex: m });
     }
 
-    // Distribute transactions
+    // Distribute transactions using BS month conversion
     transactions.forEach(tx => {
-        const txDate = new Date(tx.created_at);
-        const txMonth = txDate.getMonth();
-        const dataPoint = chartData.find(d => d.monthIndex === txMonth);
+        const bs = getBSMonthYear(tx.created_at);
+        const dataPoint = chartData.find(d => d.monthIndex === bs.month);
         
         if (dataPoint) {
             const amount = parseFloat(tx.amount || 0);

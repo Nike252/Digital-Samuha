@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getCurrentBSDate } from '../../utils/nepaliDateUtils';
 import logo from '../../assets/Photos/ds_logo.png';
 import heroImage from '../../assets/hero-image.jpg';
 
@@ -503,7 +504,7 @@ const Landing = () => {
 
       {/* ──────────── FOOTER ──────────── */}
       <footer className="py-10 px-6 bg-[#1a0631] text-center border-t border-purple-900/50">
-        <p className="text-gray-400 text-xs">© 2083 BS. Made with ❤️ for Nepal's Communities.</p>
+        <p className="text-gray-400 text-xs">© {getCurrentBSDate().year} BS. Made with ❤️ for Nepal's Communities.</p>
       </footer>
     </div>
   );

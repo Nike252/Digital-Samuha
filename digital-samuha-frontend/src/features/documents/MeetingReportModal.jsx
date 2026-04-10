@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Printer, FileText } from 'lucide-react';
+import { toBS } from '../../utils/nepaliDateUtils';
 
 const MeetingReportModal = ({ isOpen, onClose, selectedReport }) => {
   if (!isOpen || !selectedReport) return null;
@@ -16,7 +17,7 @@ const MeetingReportModal = ({ isOpen, onClose, selectedReport }) => {
             <div className="flex items-center gap-4 mb-4">
               <div className="px-4 py-1.5 bg-amber-50 text-amber-600 rounded-full text-xs font-black tracking-widest uppercase">Meeting Record Sheet</div>
               <div className="text-gray-400 font-bold">•</div>
-              <div className="text-gray-500 font-bold">{new Date(selectedReport.meeting_details.date).toLocaleDateString(undefined, { dateStyle: 'long' })}</div>
+              <div className="text-gray-500 font-bold">{toBS(selectedReport.meeting_details.date)}</div>
             </div>
             <h2 className="text-4xl font-black text-gray-900 leading-tight">{selectedReport.meeting_details.title}</h2>
          </div>

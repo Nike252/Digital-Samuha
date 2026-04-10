@@ -1,5 +1,6 @@
 import React from 'react';
 import { Calendar as CalendarIcon } from 'lucide-react';
+import { toBS } from '../../utils/nepaliDateUtils';
 
 const MeetingSidebar = ({ meetings, selectedMeeting, handleSelectMeeting, loading }) => {
   return (
@@ -22,7 +23,7 @@ const MeetingSidebar = ({ meetings, selectedMeeting, handleSelectMeeting, loadin
             <div className="flex items-center gap-3">
               <CalendarIcon size={18} className={selectedMeeting?.id === m.id ? 'text-indigo-200' : 'text-indigo-600'} />
               <div>
-                <div className="font-bold text-sm tracking-tight">{new Date(m.date).toLocaleDateString()}</div>
+                 <div className="font-bold text-sm tracking-tight">{toBS(m.date)}</div>
                 <div className={`text-[10px] font-bold uppercase tracking-wider ${selectedMeeting?.id === m.id ? 'text-indigo-100' : 'text-gray-400'}`}>{m.title}</div>
               </div>
             </div>

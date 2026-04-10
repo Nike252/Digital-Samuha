@@ -175,3 +175,47 @@ function findNthWeekdayInBSMonth(bsYear, bsMonth, targetDayIndex, weekOffset) {
 export const formatBSDate = (bsDateObj) => {
     return `${MONTHS_BS[bsDateObj.month - 1]} ${bsDateObj.day}, ${bsDateObj.year}`;
 };
+
+/**
+ * Universal helper: Convert any AD date input to a formatted BS string.
+ * Usage: toBS('2026-04-09')  →  "Chaitra 27, 2082"
+ *        toBS(new Date())    →  "Chaitra 27, 2082"
+ *        toBS('2026-04-09', 'short')  →  "Chaitra 2082"
+ *        toBS('2026-04-09', 'monthDay')  →  "Chaitra 27"
+ */
+export const toBS = (adDateInput, format = 'full') => {
+    try {
+        if (!adDateInput) return '..........';
+        const adDate = adDateInput instanceof Date ? adDateInput : new Date(adDateInput);
+        if (isNaN(adDate.getTime())) return '..........';
+        const bs = adToBS(adDate);
+        switch (format) {
+            case 'short':
+                return `${bs.monthName} ${bs.year}`;
+            case 'monthDay':
+                return `${bs.monthName} ${bs.day}`;
+            case 'yearOnly':
+                return `${bs.year}`;
+            default:
+                return `${bs.monthName} ${bs.day}, ${bs.year}`;
+        }
+    } catch (e) {
+        console.error("toBS conversion error:", e);
+        return adDateInput?.toString() || '..........';
+    }
+};
+
+/**
+ * Get BS month/year info from an AD date (for filter components)
+ */
+export const getBSMonthYear = (adDateInput) => {
+    try {
+        const adDate = adDateInput instanceof Date ? adDateInput : new Date(adDateInput);
+        const bs = adToBS(adDate);
+        return { year: bs.year, month: bs.month - 1, monthName: bs.monthName }; // month is 0-indexed for filter consistency
+    } catch (e) {
+        return { year: 2082, month: 0, monthName: 'Baisakh' };
+    }
+};
+
+export { MONTHS_BS };

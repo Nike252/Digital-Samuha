@@ -24,7 +24,8 @@ const ChatMessages = ({ messages, user, getAvatarColor, loading, messagesEndRef 
     <div className="flex-1 overflow-y-auto px-8 py-8 space-y-8 bg-slate-50/30">
       {messages.map((msg, idx) => {
         const isOwn = msg.sender_id === user.id;
-        const showAvatar = idx === 0 || messages[idx-1].sender_id !== msg.sender_id;
+        const prevMsg = idx > 0 ? messages[idx-1] : null;
+        const showAvatar = idx === 0 || prevMsg.sender_id !== msg.sender_id || prevMsg.type === 'system';
         
         if (msg.type === 'system') {
           return (

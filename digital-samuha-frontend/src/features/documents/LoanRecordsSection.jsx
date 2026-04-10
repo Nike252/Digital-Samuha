@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, ChevronRight, FileText, Banknote } from 'lucide-react';
 import LoanDetailsModal from './LoanDetailsModal';
+import { toBS } from '../../utils/nepaliDateUtils';
 
 const LoanRecordsSection = ({ loans }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,7 +74,7 @@ const LoanRecordsSection = ({ loans }) => {
                 </div>
                 
                 <div className="col-span-2 text-sm text-gray-600 font-medium">
-                  {new Date(loan.applied_date).toLocaleDateString()}
+                  {toBS(loan.applied_date)}
                 </div>
                 
                 <div className="col-span-2">

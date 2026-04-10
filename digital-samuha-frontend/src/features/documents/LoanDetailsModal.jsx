@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, User, Calendar, CreditCard, Banknote, BadgeCheck, AlertCircle, Clock } from 'lucide-react';
+import { toBS } from '../../utils/nepaliDateUtils';
 
 const LoanDetailsModal = ({ isOpen, onClose, loan }) => {
   if (!isOpen || !loan) return null;
@@ -71,7 +72,7 @@ const LoanDetailsModal = ({ isOpen, onClose, loan }) => {
               <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl"><Calendar size={20} /></div>
               <div>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Applied Date</p>
-                <p className="font-bold text-gray-800">{new Date(loan.applied_date).toLocaleDateString()}</p>
+                <p className="font-bold text-gray-800">{toBS(loan.applied_date)}</p>
               </div>
             </div>
             {(loan.disbursed_date || loan.approved_date) && (
@@ -79,7 +80,7 @@ const LoanDetailsModal = ({ isOpen, onClose, loan }) => {
                 <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl"><BadgeCheck size={20} /></div>
                 <div>
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{loan.disbursed_date ? 'Disbursed Date' : 'Approved Date'}</p>
-                  <p className="font-bold text-gray-800">{new Date(loan.disbursed_date || loan.approved_date).toLocaleDateString()}</p>
+                  <p className="font-bold text-gray-800">{toBS(loan.disbursed_date || loan.approved_date)}</p>
                 </div>
               </div>
             )}

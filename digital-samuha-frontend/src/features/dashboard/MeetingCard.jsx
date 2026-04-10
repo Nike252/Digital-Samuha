@@ -1,4 +1,5 @@
 import React from 'react';
+import { toBS } from '../../utils/nepaliDateUtils';
 
 const MeetingCard = ({ 
   loading, 
@@ -23,7 +24,7 @@ const MeetingCard = ({
                     <div className="bg-indigo-500 rounded-lg p-2"><span className="text-xl">📅</span></div>
                     <div><p className="font-bold text-lg">{nextMeeting.bs}</p><p className="text-indigo-200 text-sm">{nextMeeting.weekday}, {formatTime(samuhaSettings?.default_meeting_time)}</p></div>
                 </div>
-                <p className="text-sm text-indigo-100 mt-2 pl-12 border-l-2 border-indigo-400">{nextMeeting.ad.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p className="text-sm text-indigo-100 mt-2 pl-12 border-l-2 border-indigo-400">{toBS(nextMeeting.ad)}</p>
             </div>
           ) : (
             <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 text-center border border-white/10">

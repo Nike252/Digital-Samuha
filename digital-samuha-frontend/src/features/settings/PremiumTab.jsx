@@ -1,6 +1,7 @@
 import React from 'react';
 import { Zap, Clock, CheckCircle2, CreditCard } from 'lucide-react';
 import Button from '../../components/ui/Button';
+import { toBS } from '../../utils/nepaliDateUtils';
 
 const PremiumTab = ({ 
   isPremium, 
@@ -48,13 +49,13 @@ const PremiumTab = ({
                 <div className="bg-white/80 rounded-xl p-4 border border-emerald-100">
                   <p className="text-xs text-gray-500 font-medium mb-1">Upgraded On</p>
                   <p className="text-sm font-bold text-gray-900">
-                    {startDate ? startDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}
+                    {startDate ? toBS(startDate) : 'N/A'}
                   </p>
                 </div>
                 <div className="bg-white/80 rounded-xl p-4 border border-emerald-100">
                   <p className="text-xs text-gray-500 font-medium mb-1">Expires On</p>
                   <p className="text-sm font-bold text-gray-900">
-                    {expiryDate ? expiryDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}
+                    {expiryDate ? toBS(expiryDate) : 'N/A'}
                   </p>
                 </div>
               </div>
@@ -150,7 +151,7 @@ const PremiumTab = ({
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-gray-900">Premium Upgrade</p>
-                        <p className="text-xs text-gray-500">{subscription.start_date ? new Date(subscription.start_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}</p>
+                        <p className="text-xs text-gray-500">{subscription.start_date ? toBS(subscription.start_date) : 'N/A'}</p>
                       </div>
                     </div>
                     <div className="text-right">

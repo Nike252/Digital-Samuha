@@ -1,6 +1,7 @@
 import React from 'react';
 import { Calendar as CalendarIcon, UserCheck, Clock, X, Save, Plus, AlertCircle, Info, Trash2 } from 'lucide-react';
 import MainLayout from '../../layouts/MainLayout';
+import { toBS } from '../../utils/nepaliDateUtils';
 import useAttendance from './useAttendance_Snappy';
 import MeetingSidebar from './MeetingSidebar';
 import AttendanceTable from './AttendanceTable';
@@ -72,9 +73,9 @@ const Attendance = ({ user, onLogout }) => {
                   <span className="text-[10px] font-bold opacity-80">Please click "Save Record" to finalize fines and attendance.</span>
                 </div>
               )}
-              {!canEdit && !isLocked && <div className="bg-amber-50 border-b border-amber-100 px-6 py-3 flex items-center gap-3 text-amber-700"><AlertCircle size={18} /><span className="text-sm font-bold">{!isPastOrToday ? `Attendance will be enabled on ${selectedMeeting.date} at ${selectedMeeting.start_time || '10:00'}.` : "Permission denied for this action."}</span></div>}
+              {!canEdit && !isLocked && <div className="bg-amber-50 border-b border-amber-100 px-6 py-3 flex items-center gap-3 text-amber-700"><AlertCircle size={18} /><span className="text-sm font-bold">{!isPastOrToday ? `Attendance will be enabled on ${toBS(selectedMeeting.date)} at ${selectedMeeting.start_time || '10:00'}.` : "Permission denied for this action."}</span></div>}
               <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
-                <div><div className="flex items-center gap-2"><h2 className="text-xl font-bold text-gray-900">{selectedMeeting.title}</h2><span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-full uppercase tracking-tighter border border-indigo-100">ID: #{selectedMeeting.id}</span></div><p className="text-sm text-gray-500 font-medium">{new Date(selectedMeeting.date).toDateString()}</p></div>
+                <div><div className="flex items-center gap-2"><h2 className="text-xl font-bold text-gray-900">{selectedMeeting.title}</h2><span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-full uppercase tracking-tighter border border-indigo-100">ID: #{selectedMeeting.id}</span></div><p className="text-sm text-gray-500 font-medium">{toBS(selectedMeeting.date)}</p></div>
                 <div className="flex items-center gap-3">
                   {isAdhakshya && (
                     <button onClick={() => handleDeleteMeeting(selectedMeeting.id)} className="flex items-center gap-2 px-4 py-2.5 text-rose-600 hover:bg-rose-50 rounded-xl font-bold transition-all border border-transparent hover:border-rose-100" title="Delete Meeting">
