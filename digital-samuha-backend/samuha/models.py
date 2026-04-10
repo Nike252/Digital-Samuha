@@ -24,6 +24,7 @@ class Samuha(models.Model):
     adhakshya_full_name = models.CharField(max_length=255)
     adhakshya_phone = models.CharField(max_length=20)
     adhakshya_email = models.EmailField()
+    adhakshya_citizenship_no = models.CharField(max_length=50, blank=True, null=True, help_text="Citizenship Number of the Adhakshya")
 
     is_registered_with_government = models.BooleanField(default=False)
     proof_document = models.FileField(upload_to="proof_documents/", blank=True, null=True)

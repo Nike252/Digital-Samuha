@@ -52,10 +52,17 @@ class AttendanceTests(APITestCase):
         meeting = Meeting.objects.create(samuha=self.samuha, date="2026-03-22", title="Test Meeting")
         self.client.force_authenticate(user=self.adhakshya)
         
-        # Using EndMeetingView logic for UT-17/18
-        url = reverse('meeting-end', kwargs={'meeting_id': meeting.id})
+        # Using AttendanceBatchUpdateView logic for UT-17/18
+        # We need to GET the records first to get the IDs
+        get_url = reverse('attendance-batch-update', kwargs={'meeting_id': meeting.id})
+        get_response = self.client.get(get_url)
+        attendance_records = get_response.data
+        
+        url = reverse('attendance-batch-update', kwargs={'meeting_id': meeting.id})
         data = {
-            "present_user_ids": [self.member.id, self.adhakshya.id]
+            "attendance": [
+                {"id": rec['id'], "status": "present"} for rec in attendance_records
+            ]
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -69,10 +76,18 @@ class AttendanceTests(APITestCase):
         meeting = Meeting.objects.create(samuha=self.samuha, date="2026-03-23", title="Test Meeting Absent")
         self.client.force_authenticate(user=self.adhakshya)
         
-        # Only Adhakshya is present, self.member is absent
-        url = reverse('meeting-end', kwargs={'meeting_id': meeting.id})
+        # Get records to get IDs
+        get_url = reverse('attendance-batch-update', kwargs={'meeting_id': meeting.id})
+        get_response = self.client.get(get_url)
+        attendance_records = get_response.data
+        
+        url = reverse('attendance-batch-update', kwargs={'meeting_id': meeting.id})
+        # Set self.member to absent
         data = {
-            "present_user_ids": [self.adhakshya.id]
+            "attendance": [
+                {"id": rec['id'], "status": "present" if rec['user_details']['id'] == self.adhakshya.id else "absent"} 
+                for rec in attendance_records
+            ]
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -83,3 +98,15 @@ class AttendanceTests(APITestCase):
         
         # Verify transaction created in ledger
         self.assertTrue(Transaction.objects.filter(user=self.member, type='fine', amount=50.00).exists())
+
+    def test_ut37_restarts_ended_meeting_blocked(self):
+        """UT-37: Admin attempts to delete a meeting with transactions (re-using meeting-detail delete)"""
+        meeting = Meeting.objects.create(samuha=self.samuha, date="2026-03-24", title="Dead Meeting")
+        # Add a transaction to block deletion
+        Transaction.objects.create(samuha=self.samuha, user=self.member, meeting=meeting, type='saving', amount=500)
+        
+        self.client.force_authenticate(user=self.adhakshya)
+        url = reverse('meeting-detail', kwargs={'pk': meeting.id})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("recorded financial transactions", str(response.data))

@@ -45,6 +45,11 @@ class TransactionViewSet(LedgerBaseViewSet):
         meeting_id = self.request.query_params.get('meeting')
         if meeting_id:
             qs = qs.filter(meeting_id=meeting_id)
+
+        # ST-16: Support filtering by type (saving, fine, loan_repayment, etc.)
+        trans_type = self.request.query_params.get('type')
+        if trans_type:
+            qs = qs.filter(type=trans_type)
         return qs
 
     def destroy(self, request, *args, **kwargs):
@@ -111,6 +116,17 @@ class LoanViewSet(LedgerBaseViewSet):
 
     def perform_create(self, serializer):
         samuha, _ = self.get_samuha()
+        
+        # UT-13: Prevent double loan
+        existing_loan = Loan.objects.filter(
+            samuha=samuha, 
+            user=self.request.user, 
+            status__in=[Loan.STATUS_PENDING, Loan.STATUS_ACTIVE, Loan.STATUS_APPROVED]
+        ).exists()
+        
+        if existing_loan:
+            raise ValidationError("You already have an active or pending loan in this Samuha.")
+
         # Auto-inject loan interest rate from Samuha rules
         serializer.save(
             samuha=samuha, 
@@ -129,6 +145,13 @@ class LoanViewSet(LedgerBaseViewSet):
         from notifications.utils import notify_user
         
         if action_type == 'approve':
+            # Treasury Check (The Guard) - Fix for UT-14
+            total_fund = services.get_samuha_financial_summary(loan.samuha)
+            if loan.principal_amount > total_fund:
+                 return Response({
+                     "error": f"Insufficient Samuha Funds. Current Treasury: NPR {total_fund}. Cannot approve a loan for NPR {loan.principal_amount}."
+                 }, status=status.HTTP_400_BAD_REQUEST)
+
             loan.status = Loan.STATUS_APPROVED
             loan.approved_date = timezone.now().date()
             loan.save()
@@ -269,7 +292,6 @@ class LoanViewSet(LedgerBaseViewSet):
             # Get Probabilities
             probs = model.predict_proba(features)[0] # [Safe_Prob, Default_Prob]
             default_prob = float(probs[1]) * 100
-            
             # AI Logic Mapping
             risk_score = default_prob
             grade = "A"

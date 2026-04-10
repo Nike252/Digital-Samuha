@@ -1,5 +1,6 @@
 import React from 'react';
 import { Calendar, Info, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { toBS } from '../../utils/nepaliDateUtils';
 
 const SavingsTab = ({
   meetings,
@@ -27,10 +28,7 @@ const SavingsTab = ({
   const isLocked = !isLatest && meetings.length > 1;
 
   const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    return `${monthNames[d.getUTCMonth()]} ${d.getUTCDate()}`;
+    return toBS(dateStr, 'monthDay');
   };
 
   return (
@@ -53,9 +51,9 @@ const SavingsTab = ({
               className="bg-transparent border-none text-sm font-bold text-gray-700 focus:ring-0 outline-none pr-8 w-full truncate"
             >
               <option value="">Select Meeting</option>
-              {meetings.map(m => (
+              {meetings.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.date} - {m.title.replace(/\s*-\s*[A-Za-z]+\s+\d{4}$/, '')}
+                  {toBS(m.date)} - {m.title.replace(/\s*-\s*[A-Za-z]+\s+\d{4}$/, '')}
                 </option>
               ))}
             </select>
@@ -86,7 +84,7 @@ const SavingsTab = ({
         <div className="mb-6 p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-center gap-3 text-amber-700">
           <Clock size={20} className="animate-pulse" />
           <p className="text-sm font-bold">
-            Savings for this meeting will unlock on {new Date(selectedMeeting.date).toLocaleDateString()} at {selectedMeeting.start_time}.
+            Savings for this meeting will unlock on {toBS(selectedMeeting.date)} at {selectedMeeting.start_time}.
           </p>
         </div>
       )}

@@ -17,7 +17,7 @@ if not loan:
     sys.exit(1)
 
 print(f"Testing prediction for Loan ID: {loan.id}")
-print(f"Loan Details: Amt={loan.principal_amount}, Term={loan.loan_term}, Grade={loan.credit_grade}")
+print(f"Loan Details: Amt={loan.principal_amount}, Term={loan.loan_term_months}")
 
 result = predict_loan_default(loan)
 print(f"Prediction Result: {result}")
