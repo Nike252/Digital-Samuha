@@ -7,6 +7,7 @@ const useMembers = (user) => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('active'); // 'active', 'pending', 'all'
+  const [searchQuery, setSearchQuery] = useState('');
   const isAdmin = ['adhakshya', 'co_adhakshya'].includes(user?.role);
 
   const fetchMembers = async () => {
@@ -34,14 +35,23 @@ const useMembers = (user) => {
   };
 
   const filteredMembers = members.filter(m => {
-    if (activeTab === 'active') return m.status === 'active';
-    if (activeTab === 'pending') return m.status === 'pending';
+    // 1. Filter by Tab
+    if (activeTab === 'active' && m.status !== 'active') return false;
+    if (activeTab === 'pending' && m.status !== 'pending') return false;
+    
+    // 2. Filter by Search Query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      return m.full_name?.toLowerCase().includes(q) || m.phone?.includes(q);
+    }
+
     return true; 
   });
 
   return {
     members, loading, activeTab, setActiveTab, isAdmin,
-    fetchMembers, handleUpdateStatus, filteredMembers
+    fetchMembers, handleUpdateStatus, filteredMembers,
+    searchQuery, setSearchQuery
   };
 };
 
