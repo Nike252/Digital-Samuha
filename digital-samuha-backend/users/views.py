@@ -1,4 +1,4 @@
-from rest_framework import permissions, status
+from rest_framework import permissions, status, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -59,6 +59,8 @@ class SignUpView(APIView):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
+        except serializers.ValidationError as e:
+            return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             import traceback
             return Response(
@@ -101,7 +103,11 @@ class LoginView(APIView):
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data, context={"request": request})
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except:
+            return Response({"detail": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+        
         user = serializer.validated_data["user"]
 
         # Block superusers from regular login — they must use /sudo-login/
@@ -109,6 +115,15 @@ class LoginView(APIView):
             return Response(
                 {"detail": "Invalid credentials."}, 
                 status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # Block login if user's Samuha is inactive
+        from samuha.models import Membership, Samuha
+        membership = Membership.objects.filter(user=user, is_approved=True).select_related('samuha').first()
+        if membership and membership.samuha.status == Samuha.STATUS_INACTIVE:
+            return Response(
+                {"detail": "Your Samuha has been deactivated by the administrator. Please contact the admin."},
+                status=status.HTTP_403_FORBIDDEN
             )
 
         refresh = RefreshToken.for_user(user)
@@ -156,7 +171,7 @@ class CurrentUserView(APIView):
         user = request.user
         
         # Get user's memberships (they can have multiple)
-        from samuha.models import Membership
+        from samuha.models import Membership, Samuha
         memberships = Membership.objects.filter(user=user, is_approved=True)
         
         # Get primary membership (first approved one, or first one if none approved)
@@ -178,14 +193,21 @@ class CurrentUserView(APIView):
         
         # Add membership info if exists
         if primary_membership:
+            samuha = primary_membership.samuha
             response_data["role"] = primary_membership.role
             response_data["role_display"] = primary_membership.get_role_display()
             response_data["samuha"] = {
-                "id": primary_membership.samuha.id,
-                "name": primary_membership.samuha.samuha_name,
-                "code": primary_membership.samuha.samuha_code,
+                "id": samuha.id,
+                "name": samuha.samuha_name,
+                "code": samuha.samuha_code,
+                "status": samuha.status,
             }
             response_data["is_approved"] = primary_membership.is_approved
+
+            # If the Samuha is inactive, inform the frontend
+            if samuha.status == Samuha.STATUS_INACTIVE:
+                response_data["samuha_inactive"] = True
+                response_data["samuha_inactive_message"] = "Your Samuha has been deactivated by the administrator."
         else:
             response_data["role"] = None
             response_data["role_display"] = None

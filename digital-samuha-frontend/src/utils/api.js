@@ -66,8 +66,14 @@ export const apiRequest = async (endpoint, options = {}) => {
       // Handle authentication errors
       if (response.status === 401) {
         removeAuthToken()
-        // Check if it's a token validation error
-        if (data.code === 'token_not_valid' || data.detail?.includes('token')) {
+        
+        // Prioritize the backend's specific error message if available
+        if (data && (data.detail || data.error)) {
+          throw new Error(data.detail || data.error);
+        }
+
+        // Fallback for token specific errors
+        if (data && (data.code === 'token_not_valid' || data.detail?.includes('token'))) {
           throw new Error('Your session has expired or the token is invalid. Please login again.')
         }
         throw new Error('Authentication required. Please login first.')

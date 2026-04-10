@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getCurrentBSDate } from '../utils/nepaliDateUtils';
 
 // Import local images
 import slide1 from '../assets/Photos/login_page_1.jpg';
@@ -147,7 +148,7 @@ const AuthLayout = ({ children, title, subtitle, backButton }) => {
                  </button>
 
                  <div className="text-gray-300 text-[10px]">
-                   &copy; {new Date().getFullYear()} Digital Samuha
+                   &copy; {getCurrentBSDate().year} BS Digital Samuha
                  </div>
                </div>
             </div>

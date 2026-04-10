@@ -80,3 +80,52 @@ class AuthTests(APITestCase):
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_ut29_expired_token_fails(self):
+        """UT-29: Try accessing an API route with an expired Access Token"""
+        from rest_framework_simplejwt.tokens import AccessToken
+        from datetime import timedelta
+        
+        token = AccessToken.for_user(self.user)
+        token.set_exp(lifetime=timedelta(seconds=-1)) # Expire it instantly
+        
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(token))
+        url = reverse('auth-me')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        
+    def test_ut30_refresh_token_succeeds(self):
+        """UT-30: Send a valid Refresh Token to get a fresh Access Token"""
+        from rest_framework_simplejwt.tokens import RefreshToken
+        refresh = RefreshToken.for_user(self.user)
+        
+        url = reverse('auth-token-refresh')
+        response = self.client.post(url, {'refresh': str(refresh)})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+
+    def test_ut31_update_duplicate_phone(self):
+        """UT-31: User updates their phone number to one already in use"""
+        # Create another user to cause duplication
+        User.objects.create_user(phone="9899999999", password="pwd", first_name="Other", last_name="Guy")
+        
+        self.client.force_authenticate(user=self.user)
+        url = reverse('auth-me')
+        data = {
+            'phone': '9899999999',
+            'current_password': self.user_password
+        }
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+    def test_ut32_update_with_wrong_password(self):
+        """UT-32: User attempts to change password with incorrect current_password"""
+        self.client.force_authenticate(user=self.user)
+        url = reverse('auth-me')
+        data = {
+            'new_password': 'newpassword123',
+            'confirm_new_password': 'newpassword123',
+            'current_password': 'wrong_password_here'
+        }
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

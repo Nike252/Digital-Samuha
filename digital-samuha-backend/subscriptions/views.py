@@ -115,7 +115,11 @@ class eSewaVerifyView(views.APIView):
                 
                 # CASE 1: Platform Upgrade
                 if tx_uuid.startswith('UP-'):
-                    plan = Plan.objects.get(name='premium')
+                    try:
+                        plan = Plan.objects.get(name='premium')
+                    except Plan.DoesNotExist:
+                        return Response({"detail": "Configuration error: Premium plan not found."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
                     membership = Membership.objects.filter(
                         user=request.user, 
                         role=Membership.ROLE_ADHAKSHYA, 
@@ -123,7 +127,7 @@ class eSewaVerifyView(views.APIView):
                     ).first()
                     
                     if not membership:
-                        return Response({"detail": "Adhakshya membership not found."}, status=status.HTTP_404_NOT_FOUND)
+                        return Response({"detail": "Adhakshya membership not found for current user."}, status=status.HTTP_404_NOT_FOUND)
                         
                     sub, _ = SamuhaSubscription.objects.get_or_create(samuha=membership.samuha)
                     sub.plan = plan
@@ -146,16 +150,20 @@ class eSewaVerifyView(views.APIView):
                             status=Meeting.STATUS_ACTIVE
                         ).first()
                         
-                        clean_amount = str(res_data.get('total_amount')).replace(',', '')
+                        raw_amount = res_data.get('total_amount')
+                        if not raw_amount:
+                             return Response({"detail": "Payment verified but amount missing in gateway response."}, status=status.HTTP_400_BAD_REQUEST)
+                             
+                        clean_amount = str(raw_amount).replace(',', '')
                         
-                        # Idempotency check: Don't process the same eSewa transaction twice
+                        # Idempotency check
                         if Transaction.objects.filter(external_id=tx_uuid).exists():
-                            return Response({"detail": "Monthly saving already recorded.", "type": "saving"})
+                            return Response({"detail": "Monthly saving already recorded for this transaction.", "type": "saving"})
                             
                         Transaction.objects.create(
                             samuha=membership.samuha,
                             user=request.user,
-                            meeting=active_meeting, # Linked to the current active meeting!
+                            meeting=active_meeting,
                             amount=clean_amount,
                             type='saving',
                             external_id=tx_uuid,
@@ -169,13 +177,19 @@ class eSewaVerifyView(views.APIView):
                 
             return Response({"detail": "eSewa Verification Failed.", "error": res_data}, status=status.HTTP_400_BAD_REQUEST)
             
+        except Plan.DoesNotExist:
+            return Response({"detail": "Premium plan configuration missing on server."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
             import traceback
-            print(f"CRITICAL ERROR in eSewaVerifyView: {str(e)}")
-            print(traceback.format_exc())
+            error_msg = str(e)
+            stack_trace = traceback.format_exc()
+            print(f"CRITICAL ERROR in eSewaVerifyView: {error_msg}")
+            print(stack_trace)
+            from django.conf import settings
             return Response({
                 "detail": "Internal Server Error during verification.",
-                "error": str(e)
+                "error": error_msg,
+                "trace": stack_trace if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class eSewaMeetingInitiateView(views.APIView):
