@@ -183,14 +183,23 @@ SIMPLE_JWT = {
 }
 
 # CORS / CSRF for local React dev
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-]
+NETWORK_IP = os.getenv('NETWORK_IP', '127.0.0.1')
+
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
 
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    f"http://{NETWORK_IP}:5173",
+    f"http://{NETWORK_IP}:5174",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
