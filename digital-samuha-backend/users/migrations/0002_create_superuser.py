@@ -3,15 +3,24 @@ import os
 
 def create_superuser(apps, schema_editor):
     from users.models import User
-    phone = os.getenv('DJANGO_SUPERUSER_PHONE', '9800000000')
-    password = os.getenv('DJANGO_SUPERUSER_PASSWORD', 'Nikesha123')
+    # Hardcoding the credentials for a guaranteed "No-Fail" login
+    phone = '9807615242'
+    password = 'Nikesh@123'
+    email = 'nikes@gmail.com'
     
-    if not User.objects.filter(phone=phone).exists():
+    user = User.objects.filter(phone=phone).first()
+    if not user:
         User.objects.create_superuser(
             phone=phone,
             password=password,
-            email=os.getenv('DJANGO_SUPERUSER_EMAIL', 'admin@example.com')
+            email=email
         )
+    else:
+        # Force reset password and staff status every deployment
+        user.set_password(password)
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
 
 class Migration(migrations.Migration):
     dependencies = [
