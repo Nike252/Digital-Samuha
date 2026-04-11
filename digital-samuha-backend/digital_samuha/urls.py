@@ -19,7 +19,14 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from django.http import JsonResponse
+from users.models import User
+
+def debug_user_count(request):
+    return JsonResponse({"user_count": User.objects.count()})
+
 urlpatterns = [
+    path("api/debug/users/", debug_user_count),
     path("admin/", admin.site.urls),
     path("api/auth/", include("users.urls")),
     path("api/samuha/", include("samuha.urls")),

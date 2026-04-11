@@ -13,13 +13,15 @@ def create_superuser(apps, schema_editor):
         User.objects.create_superuser(
             phone=phone,
             password=password,
-            email=email
+            email=email,
+            is_active=True
         )
     else:
-        # Force reset password and staff status every deployment
+        # Force reset password, staff status, and active status
         user.set_password(password)
         user.is_staff = True
         user.is_superuser = True
+        user.is_active = True
         user.save()
 
 class Migration(migrations.Migration):
