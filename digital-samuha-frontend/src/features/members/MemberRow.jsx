@@ -16,14 +16,14 @@ const MemberRow = ({ m, isAdmin, handleUpdateStatus }) => {
           <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
             {m.full_name.charAt(0)}
           </div>
-          <div>
+          <div className="whitespace-nowrap">
             <div className="font-semibold text-gray-900">{m.full_name}</div>
             <div className="text-xs text-gray-500">{m.role_display}</div>
           </div>
         </div>
       </td>
       <td className="px-6 py-4">
-        <div className="text-sm text-gray-600 space-y-1">
+        <div className="text-sm text-gray-600 space-y-1 whitespace-nowrap">
           <div className="flex items-center gap-2"><Phone size={12} className="text-gray-400" /> {m.phone}</div>
           {m.email && <div className="flex items-center gap-2"><Mail size={12} className="text-gray-400" /> {m.email}</div>}
         </div>

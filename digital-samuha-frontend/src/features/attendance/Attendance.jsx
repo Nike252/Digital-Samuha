@@ -48,13 +48,29 @@ const Attendance = ({ user, onLogout }) => {
       </div>
 
       {samuhaRules && (
-        <div className="mb-6 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center gap-4">
-          <div className="p-3 bg-white rounded-xl shadow-sm"><CalendarIcon className="text-indigo-600" size={24} /></div>
-          <div>
-            <p className="text-sm font-bold text-indigo-900">Next Scheduled Meeting</p>
-            <p className="text-indigo-600 font-medium">{nextMeeting ? `${samuhaRules.meeting_schedule_type === 'weekly' ? `Every ${samuhaRules.meeting_day}` : 'Custom Schedule'} • Next: ${nextMeeting.bs} (${nextMeeting.weekday})` : 'Loading schedule...'}</p>
+        <div className="mb-6 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-white rounded-xl shadow-sm shrink-0"><CalendarIcon className="text-indigo-600" size={24} /></div>
+            <div>
+              <p className="text-sm font-bold text-indigo-900">Next Scheduled Meeting</p>
+              <p className="text-indigo-600 font-medium text-xs sm:text-base">
+                {nextMeeting 
+                  ? `${samuhaRules.meeting_schedule_type === 'weekly' ? `Every ${samuhaRules.meeting_day}` : 'Custom Schedule'} • Next: ${nextMeeting.bs} (${nextMeeting.weekday})` 
+                  : 'Loading schedule...'
+                }
+              </p>
+            </div>
           </div>
-          <div className="ml-auto flex gap-4 text-xs font-bold uppercase tracking-wider text-indigo-400"><span>Absent Fine: NPR {samuhaRules.absent_fine}</span><span>Late Fine: NPR {samuhaRules.late_fine}</span></div>
+          <div className="sm:ml-auto flex sm:flex-row gap-4 text-[10px] sm:text-xs font-black uppercase tracking-widest text-indigo-400 border-t sm:border-t-0 border-indigo-100 pt-3 sm:pt-0">
+            <div className="flex flex-col">
+              <span className="text-[8px] opacity-70">Absent Fine</span>
+              <span className="text-indigo-600">NPR {Number(samuhaRules.absent_fine).toFixed(2)}</span>
+            </div>
+            <div className="flex flex-col border-l border-indigo-100 pl-4">
+              <span className="text-[8px] opacity-70">Late Fine</span>
+              <span className="text-indigo-600">NPR {Number(samuhaRules.late_fine).toFixed(2)}</span>
+            </div>
+          </div>
         </div>
       )}
 
@@ -74,25 +90,32 @@ const Attendance = ({ user, onLogout }) => {
                 </div>
               )}
               {!canEdit && !isLocked && <div className="bg-amber-50 border-b border-amber-100 px-6 py-3 flex items-center gap-3 text-amber-700"><AlertCircle size={18} /><span className="text-sm font-bold">{!isPastOrToday ? `Attendance will be enabled on ${toBS(selectedMeeting.date)} at ${selectedMeeting.start_time || '10:00'}.` : "Permission denied for this action."}</span></div>}
-              <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
-                <div><div className="flex items-center gap-2"><h2 className="text-xl font-bold text-gray-900">{selectedMeeting.title}</h2><span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-full uppercase tracking-tighter border border-indigo-100">ID: #{selectedMeeting.id}</span></div><p className="text-sm text-gray-500 font-medium">{toBS(selectedMeeting.date)}</p></div>
+              <div className="p-6 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/30">
+                <div>
+                  <h2 className="text-xl font-extrabold text-gray-900 tracking-tight">{selectedMeeting.title}</h2>
+                  <p className="text-sm text-gray-500 font-bold mt-0.5">{toBS(selectedMeeting.date)}</p>
+                </div>
                 <div className="flex items-center gap-3">
                   {isAdhakshya && (
-                    <button onClick={() => handleDeleteMeeting(selectedMeeting.id)} className="flex items-center gap-2 px-4 py-2.5 text-rose-600 hover:bg-rose-50 rounded-xl font-bold transition-all border border-transparent hover:border-rose-100" title="Delete Meeting">
-                      <Trash2 size={18} /><span className="hidden md:inline">Delete Meeting</span>
+                    <button 
+                      onClick={() => handleDeleteMeeting(selectedMeeting.id)} 
+                      className="w-11 h-11 flex items-center justify-center text-rose-500 hover:bg-rose-50 rounded-xl transition-all border border-transparent hover:border-rose-100 shrink-0" 
+                      title="Delete Meeting"
+                    >
+                      <Trash2 size={20} />
                     </button>
                   )}
                   <button 
                     onClick={handleSaveAttendance} 
                     disabled={saving || !canEdit} 
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all disabled:opacity-50 shadow-lg ${
+                    className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-black text-sm transition-all disabled:opacity-50 shadow-xl min-w-[160px] ${
                       hasUnsavedChanges 
-                        ? 'bg-indigo-600 text-white shadow-indigo-100 ring-4 ring-indigo-50 animate-pulse' 
+                        ? 'bg-indigo-600 text-white shadow-indigo-100 ring-4 ring-indigo-50' 
                         : 'bg-emerald-600 text-white shadow-emerald-100'
                     }`}
                   >
                     <Save size={18} />
-                    {saving ? 'Saving...' : (hasUnsavedChanges ? 'Save Changes' : 'Save Record')}
+                    <span>{saving ? 'Saving...' : (hasUnsavedChanges ? 'Save Changes' : 'Save Record')}</span>
                   </button>
                 </div>
               </div>
