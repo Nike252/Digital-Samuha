@@ -120,6 +120,9 @@ class ApproveSamuhaView(APIView):
             
         except Samuha.DoesNotExist:
             return Response({"detail": "Pending Samuha not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            # Capture and return the real error
+            return Response({"detail": f"Server Error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class SamuhaListView(APIView):
