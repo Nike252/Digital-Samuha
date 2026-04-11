@@ -25,7 +25,7 @@ The Digital Samuha Team
         message,
         settings.DEFAULT_FROM_EMAIL,
         [samuha.adhakshya_email],
-        fail_silently=False,
+        fail_silently=True,
     )
 
 def notify_user(user, title, message, link=None, type='other'):
