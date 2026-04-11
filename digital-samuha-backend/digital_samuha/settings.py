@@ -194,8 +194,16 @@ if DEBUG:
         f"http://{NETWORK_IP}:5174",
     ]
 else:
-    CORS_ALLOWED_ORIGINS = [o for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if o]
-    CSRF_TRUSTED_ORIGINS = [o for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o]
+    # Allow local development origins to communicate with production for testing
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ] + [o for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if o]
+    
+    CSRF_TRUSTED_ORIGINS = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ] + [o for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o]
 
 CORS_ALLOW_CREDENTIALS = True
 
