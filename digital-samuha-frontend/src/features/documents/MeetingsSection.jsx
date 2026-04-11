@@ -36,86 +36,87 @@ const MeetingsSection = ({ meetings, viewReport }) => {
   }, [meetings, selectedYear]);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-
-      {/* Filter Bar */}
-      <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm p-6 space-y-5">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      
+      {/* Premium Filter Section with Background Mesh */}
+      <div className="relative overflow-hidden rounded-[40px] border border-white/40 shadow-2xl p-8 group">
+        {/* Background Mesh Gradients */}
+        <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-400/10 blur-[100px] rounded-full group-hover:bg-indigo-400/20 transition-colors duration-1000" />
+        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-amber-400/10 blur-[100px] rounded-full group-hover:bg-amber-400/20 transition-colors duration-1000" />
         
-        {/* Year Selector */}
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2 text-gray-400">
-            <CalendarDays size={18} />
-            <span className="text-xs font-black uppercase tracking-widest">Filter (BS)</span>
-          </div>
-          <div className="flex items-center gap-1 bg-gray-50/50 p-1 rounded-2xl border border-gray-100">
-            <button 
-              onClick={() => { setSelectedYear(y => y - 1); setSelectedMonth(null); }}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:bg-white hover:text-indigo-600 hover:shadow-sm transition-all active:scale-90"
-              title="Previous Year"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <div className="flex items-center px-4 min-w-[100px] justify-center">
-              <span className="text-xl font-black text-gray-900 tracking-tighter">{selectedYear}</span>
-              <span className="text-[10px] font-black text-indigo-500 ml-1 mt-1">BS</span>
+        <div className="relative z-10 space-y-8">
+          {/* Header & Year Selector Row */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/80 backdrop-blur-xl rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm border border-white">
+                <CalendarDays size={24} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-gray-500 uppercase tracking-[0.2em]">Filter Archive</h3>
+                <p className="text-xs font-bold text-gray-400 mt-0.5">Explore by Year & Month (BS)</p>
+              </div>
             </div>
-            <button 
-              onClick={() => { setSelectedYear(y => y + 1); setSelectedMonth(null); }}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:bg-white hover:text-indigo-600 hover:shadow-sm transition-all active:scale-90"
-              title="Next Year"
+
+            <div className="flex items-center gap-2 bg-white/60 backdrop-blur-md p-1.5 rounded-[22px] border border-white/80 shadow-inner">
+              <button 
+                onClick={() => { setSelectedYear(y => y - 1); setSelectedMonth(null); }}
+                className="w-11 h-11 rounded-[18px] flex items-center justify-center text-gray-400 hover:bg-white hover:text-indigo-600 hover:shadow-md hover:-translate-x-0.5 transition-all active:scale-95 border border-transparent hover:border-gray-50"
+                title="Previous Year"
+              >
+                <ChevronLeft size={22} />
+              </button>
+              <div className="flex flex-col items-center px-6 min-w-[120px]">
+                <span className="text-2xl font-black text-gray-900 tracking-tighter leading-none">{selectedYear}</span>
+                <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">Nepali Era</span>
+              </div>
+              <button 
+                onClick={() => { setSelectedYear(y => y + 1); setSelectedMonth(null); }}
+                className="w-11 h-11 rounded-[18px] flex items-center justify-center text-gray-400 hover:bg-white hover:text-indigo-600 hover:shadow-md hover:translate-x-0.5 transition-all active:scale-95 border border-transparent hover:border-gray-50"
+                title="Next Year"
+              >
+                <ChevronRight size={22} />
+              </button>
+            </div>
+          </div>
+
+          {/* Month Grid Overhaul */}
+          <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-3">
+            <button
+              onClick={() => setSelectedMonth(null)}
+              className={`py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all border ${
+                selectedMonth === null
+                  ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-200 scale-105'
+                  : 'bg-white/50 border-white/80 text-gray-400 hover:bg-white hover:text-indigo-600 hover:border-indigo-100 hover:shadow-sm'
+              }`}
             >
-              <ChevronRight size={20} />
+              All
             </button>
+            {MONTHS_BS.map((label, idx) => {
+              const hasData = activeMonths.has(idx);
+              const isSelected = selectedMonth === idx;
+              return (
+                <button
+                  key={label}
+                  onClick={() => setSelectedMonth(idx)}
+                  className={`py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all relative border group/btn ${
+                    isSelected
+                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-200 scale-105 z-20'
+                      : hasData
+                        ? 'bg-white border-indigo-50 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 shadow-sm'
+                        : 'bg-white/30 border-transparent text-gray-300 hover:bg-white/50 hover:text-gray-400'
+                  }`}
+                >
+                  {label}
+                  {hasData && !isSelected && (
+                    <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse" />
+                  )}
+                  {isSelected && (
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-white/40 rounded-full" />
+                  )}
+                </button>
+              );
+            })}
           </div>
-
-          {/* Quick Year Shortcuts (Only show if they have data and aren't the selected one) */}
-          <div className="flex gap-1.5 flex-wrap ml-2">
-            {availableYears.filter(y => y !== selectedYear).slice(0, 3).map(year => (
-              <button
-                key={year}
-                onClick={() => { setSelectedYear(year); setSelectedMonth(null); }}
-                className="px-4 py-1.5 rounded-xl text-[10px] font-black bg-gray-50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all uppercase tracking-widest"
-              >
-                {year}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Month Pills (Nepali months) */}
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setSelectedMonth(null)}
-            className={`px-4 py-2 rounded-2xl text-xs font-black transition-all ${
-              selectedMonth === null
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                : 'bg-gray-50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600'
-            }`}
-          >
-            All
-          </button>
-          {MONTHS_BS.map((label, idx) => {
-            const hasData = activeMonths.has(idx);
-            return (
-              <button
-                key={label}
-                onClick={() => setSelectedMonth(idx)}
-                className={`px-4 py-2 rounded-2xl text-xs font-black transition-all relative ${
-                  selectedMonth === idx
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                    : hasData
-                      ? 'bg-gray-50 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
-                      : 'bg-gray-50/50 text-gray-300 hover:text-gray-400'
-                }`}
-                // Always allow clicking to show "No meetings" feedback
-              >
-                {label}
-                {hasData && selectedMonth !== idx && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-indigo-500 rounded-full" />
-                )}
-              </button>
-            );
-          })}
         </div>
       </div>
 
@@ -135,34 +136,54 @@ const MeetingsSection = ({ meetings, viewReport }) => {
         )}
       </div>
 
-      {/* Meeting Cards Grid */}
+      {/* Meeting Cards Grid Overhaul */}
       {filteredMeetings.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredMeetings.map((meeting) => (
-            <div key={meeting.id} className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
-                  <History size={24} />
+            <div 
+              key={meeting.id} 
+              className="group relative bg-white rounded-[36px] border border-gray-100 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-2 transition-all duration-500 overflow-hidden"
+            >
+              {/* Card Surface Mesh */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              
+              <div className="p-8 pb-32"> {/* Increased bottom padding for the glass footer */}
+                <div className="flex items-start justify-between mb-6">
+                  <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white group-hover:rotate-6 transition-all duration-500 shadow-sm">
+                    <History size={28} />
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100">
+                      Archive Record
+                    </span>
+                    <span className="text-[10px] font-bold text-gray-400">
+                      {toBS(meeting.date, 'short')}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-full">
-                  {toBS(meeting.date, 'short')}
-                </span>
+
+                <h4 className="text-2xl font-black text-gray-900 mb-3 tracking-tight group-hover:text-indigo-600 transition-colors">
+                  {meeting.title}
+                </h4>
+                <p className="text-sm text-gray-500 font-medium leading-relaxed mb-6 line-clamp-2">
+                  {meeting.description || "Official session minutes, attendance logs, and financial records for the community Samuha."}
+                </p>
               </div>
-              <h4 className="text-xl font-black text-gray-900 mb-2 truncate">{meeting.title}</h4>
-              <p className="text-sm text-gray-500 font-medium mb-6 line-clamp-2">
-                {meeting.description || "Official records and minutes for this session."}
-              </p>
-              <div className="flex items-center justify-between pt-6 border-t border-gray-50">
-                <div className="flex items-center gap-2 text-sm font-bold text-gray-400">
-                  <Users size={16} />
-                  <span>Attendance Logged</span>
+
+              {/* Glassmorphic Action Footer */}
+              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gray-50/50 backdrop-blur-md border-t border-white/50 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+                    <Users size={14} className="text-gray-400" />
+                  </div>
+                  <span className="text-xs font-black text-gray-400 uppercase tracking-wider">Attendance OK</span>
                 </div>
                 <button 
                   onClick={() => viewReport(meeting.id)}
-                  className="flex items-center gap-2 text-indigo-600 font-black text-sm hover:gap-3 transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-2xl font-black text-xs shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:shadow-xl hover:-translate-y-0.5 transition-all group/btn"
                 >
-                  View Report
-                  <ChevronRight size={18} />
+                  View Details
+                  <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                 </button>
               </div>
             </div>
