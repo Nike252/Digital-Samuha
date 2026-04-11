@@ -22,11 +22,20 @@ from django.conf.urls.static import static
 from django.http import JsonResponse
 from users.models import User
 
-def debug_user_count(request):
-    return JsonResponse({"user_count": User.objects.count()})
+def debug_user_info(request):
+    user = User.objects.first()
+    if not user:
+        return JsonResponse({"error": "No users found"})
+    return JsonResponse({
+        "user_count": User.objects.count(),
+        "first_user_phone": user.phone,
+        "is_staff": user.is_staff,
+        "is_superuser": user.is_superuser,
+        "is_active": user.is_active,
+    })
 
 urlpatterns = [
-    path("api/debug/users/", debug_user_count),
+    path("api/debug/users/", debug_user_info),
     path("admin/", admin.site.urls),
     path("api/auth/", include("users.urls")),
     path("api/samuha/", include("samuha.urls")),
