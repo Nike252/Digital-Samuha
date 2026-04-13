@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { authAPI, setAuthToken } from '../../utils/api'
 import { Shield, Eye, EyeOff, AlertTriangle } from 'lucide-react'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
 
 const SuperAdminLogin = ({ onLoginSuccess }) => {
   const navigate = useNavigate()

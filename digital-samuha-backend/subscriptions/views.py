@@ -277,12 +277,21 @@ class CalculateMeetingPaymentView(views.APIView):
         if previous_meeting:
             attendance = Attendance.objects.filter(meeting=previous_meeting, user=request.user).first()
             if attendance:
-                if attendance.status == Attendance.STATUS_ABSENT:
-                    fines += samuha.absent_fine
-                    breakdown.append({"label": f"Arrears: Absent Fine ({previous_meeting.date})", "amount": float(samuha.absent_fine)})
-                elif attendance.status == Attendance.STATUS_LATE:
-                    fines += samuha.late_fine
-                    breakdown.append({"label": f"Arrears: Late Fine ({previous_meeting.date})", "amount": float(samuha.late_fine)})
+                # FIX: Only add fine if it HAS NOT been paid yet
+                from ledger.models import Transaction
+                fine_already_paid = Transaction.objects.filter(
+                    user=request.user, 
+                    meeting=previous_meeting, 
+                    type=Transaction.TYPE_FINE
+                ).exists()
+
+                if not fine_already_paid:
+                    if attendance.status == Attendance.STATUS_ABSENT:
+                        fines += samuha.absent_fine
+                        breakdown.append({"label": f"Arrears: Absent Fine ({previous_meeting.date})", "amount": float(samuha.absent_fine)})
+                    elif attendance.status == Attendance.STATUS_LATE:
+                        fines += samuha.late_fine
+                        breakdown.append({"label": f"Arrears: Late Fine ({previous_meeting.date})", "amount": float(samuha.late_fine)})
             else:
                 # If no record but meeting happened, technically absent? 
                 # For now, let's assume they might have joined late to the system.

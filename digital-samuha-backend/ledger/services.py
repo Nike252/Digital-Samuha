@@ -8,6 +8,17 @@ from .models import Transaction, Loan
 from notifications.utils import notify_user
 from samuha.models import Membership
 
+def is_meeting_locked_for_user(meeting, user):
+    """
+    Checks if a meeting is 'locked' for a user (no more attendance changes allowed).
+    Locked if: a 'saving' or 'fine' transaction already exists for this meeting/user.
+    """
+    return Transaction.objects.filter(
+        meeting=meeting, 
+        user=user, 
+        type__in=[Transaction.TYPE_SAVING, Transaction.TYPE_FINE]
+    ).exists()
+
 def get_samuha_financial_summary(samuha):
     """
     Calculates the Total Treasury Balance for a Samuha.

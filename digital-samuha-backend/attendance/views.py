@@ -142,11 +142,17 @@ class AttendanceBatchUpdateView(APIView):
                 return Response({"detail": "Co-Adhakshya can only record attendance once the meeting has started."}, status=status.HTTP_403_FORBIDDEN)
 
         attendance_data = request.data.get('attendance', [])
+        from ledger.services import is_meeting_locked_for_user
+        
         for item in attendance_data:
             record_id = item.get('id')
             if record_id:
                 record = Attendance.objects.filter(id=record_id, meeting=meeting).first()
                 if record:
+                    # FINANCIAL LOCK: If user already paid, skip their update
+                    if is_meeting_locked_for_user(meeting, record.user):
+                        continue
+                        
                     record.status = item.get('status', record.status)
                     # Safely convert fine_amount to a number
                     try:
@@ -166,20 +172,6 @@ class AttendanceBatchUpdateView(APIView):
                         
                     record.remarks = item.get('remarks', record.remarks)
                     record.save()
-                    
-                    # Create ledger transaction for fine if amount > 0
-                    if record.fine_amount > 0:
-                        from ledger.models import Transaction
-                        # Avoid duplicates: only create if not exists for this meeting/user
-                        if not Transaction.objects.filter(user=record.user, meeting=meeting, type='fine').exists():
-                            Transaction.objects.create(
-                                samuha=meeting.samuha,
-                                user=record.user,
-                                meeting=meeting,
-                                amount=record.fine_amount,
-                                type='fine',
-                                description=f"Attendance fine ({record.get_status_display()}) for meeting on {meeting.date}"
-                            )
         
         return Response({"detail": "Attendance updated successfully."})
 
