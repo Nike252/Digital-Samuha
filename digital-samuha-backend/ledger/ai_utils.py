@@ -18,9 +18,15 @@ PURPOSE_MAP = {
 }
 
 def load_ai_model():
+    print(f"DEBUG: Searching for AI model at: {MODEL_PATH}")
     if not os.path.exists(MODEL_PATH):
+        print("DEBUG: Model file DOES NOT EXIST at this path.")
         return None
-    return joblib.load(MODEL_PATH)
+    try:
+        return joblib.load(MODEL_PATH)
+    except Exception as e:
+        print(f"DEBUG: Error loading model with joblib: {str(e)}")
+        return None
 
 def predict_loan_default(loan):
     """
