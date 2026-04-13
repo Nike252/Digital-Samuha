@@ -1,10 +1,10 @@
-# Temporary files and assets
-assets/
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.webp
+# Temporary files and assets (Unblocked for Frontend)
+# assets/
+# *.png
+# *.jpg
+# *.jpeg
+# *.gif
+# *.webp
 
 # Python
 __pycache__/
