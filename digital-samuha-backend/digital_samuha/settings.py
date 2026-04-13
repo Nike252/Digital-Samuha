@@ -194,17 +194,19 @@ if DEBUG:
         f"http://{NETWORK_IP}:5174",
     ]
 else:
-    # Allow local development origins to communicate with production for testing
+    # Allow local development and production Vercel origins
     CORS_ALLOWED_ORIGINS = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://192.168.100.133:5173",
+        "https://digital-samuha.vercel.app",
     ] + [o for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if o]
     
     CSRF_TRUSTED_ORIGINS = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://192.168.100.133:5173",
+        "https://digital-samuha.vercel.app",
     ] + [o for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o]
 
 CORS_ALLOW_CREDENTIALS = True
