@@ -5,7 +5,12 @@ import pandas as pd
 from django.conf import settings
 
 # Path to your model
-MODEL_PATH = os.path.join(settings.BASE_DIR, 'ml_models', 'exported_calibrated_rf.pkl')
+# Paths to your model (Try multiple locations for Render consistency)
+PATH_OPTIONS = [
+    os.path.join(settings.BASE_DIR, 'ml_models', 'exported_calibrated_rf.pkl'),
+    os.path.join(os.getcwd(), 'ml_models', 'exported_calibrated_rf.pkl'),
+    os.path.join(os.path.dirname(__file__), '..', 'ml_models', 'exported_calibrated_rf.pkl'),
+]
 
 # Feature categories for encoding (matching your Jupyter model)
 GRADE_MAP = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6}
@@ -18,12 +23,20 @@ PURPOSE_MAP = {
 }
 
 def load_ai_model():
-    print(f"DEBUG: Searching for AI model at: {MODEL_PATH}")
-    if not os.path.exists(MODEL_PATH):
-        print("DEBUG: Model file DOES NOT EXIST at this path.")
+    model_path = None
+    for p in PATH_OPTIONS:
+        print(f"DEBUG: Checking path: {p}")
+        if os.path.exists(p):
+            model_path = p
+            print(f"DEBUG: FOUND model at: {p}")
+            break
+            
+    if not model_path:
+        print(f"DEBUG: Model file NOT FOUND in any of the {len(PATH_OPTIONS)} locations.")
         return None
+        
     try:
-        return joblib.load(MODEL_PATH)
+        return joblib.load(model_path)
     except Exception as e:
         print(f"DEBUG: Error loading model with joblib: {str(e)}")
         return None
