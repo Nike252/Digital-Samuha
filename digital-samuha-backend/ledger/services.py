@@ -80,6 +80,8 @@ def record_member_contribution(samuha, admin_user, savings_data, meeting):
                     'description': f"Monthly Saving - {meeting.date.strftime('%B %Y')}"
                 }
             )
+            from attendance.models import Attendance
+            Attendance.objects.filter(meeting=meeting, user_id=user_id).update(is_paid_saving=True)
         
         # 2. Record Fine (Idempotent - get_or_create)
         if f_amount > 0:
@@ -91,6 +93,8 @@ def record_member_contribution(samuha, admin_user, savings_data, meeting):
                     'description': f"Meeting Fine - {meeting.date.strftime('%B %Y')}"
                 }
             )
+            from attendance.models import Attendance
+            Attendance.objects.filter(meeting=meeting, user_id=user_id).update(is_paid_fine=True)
         results.append(user_id)
     return len(results)
 

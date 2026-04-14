@@ -6,14 +6,15 @@ class TransactionSerializer(serializers.ModelSerializer):
     user_details = UserSerializer(source='user', read_only=True)
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     user_id = serializers.ReadOnlyField(source='user.id')
+    meeting_status = serializers.ReadOnlyField(source='meeting.status')
     
     class Meta:
         model = Transaction
         fields = [
             'id', 'samuha', 'user', 'user_id', 'user_details', 'meeting', 
-            'type', 'amount', 'description', 'date', 'created_at'
+            'meeting_status', 'type', 'amount', 'description', 'date', 'created_at'
         ]
-        read_only_fields = ['id', 'samuha', 'created_at', 'user_id']
+        read_only_fields = ['id', 'samuha', 'created_at', 'user_id', 'meeting_status']
 
 class LoanSerializer(serializers.ModelSerializer):
     user_details = UserSerializer(source='user', read_only=True)

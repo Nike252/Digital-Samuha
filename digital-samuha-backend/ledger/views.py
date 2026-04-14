@@ -55,6 +55,13 @@ class TransactionViewSet(LedgerBaseViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         
+        # 🛡️ THE DEADBOLT: If meeting is already completed, block deletion!
+        if instance.meeting and instance.meeting.status == 'completed':
+            return Response(
+                {"detail": "Cannot delete transactions from a COMPLETED meeting to preserve historical accuracy."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
         # Block deletion of critical transaction types
         protected_types = [
             Transaction.TYPE_LOAN_DISBURSEMENT,

@@ -43,6 +43,8 @@ class Attendance(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="attendance_history")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_PRESENT)
     fine_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    is_paid_saving = models.BooleanField(default=False)
+    is_paid_fine = models.BooleanField(default=False)
     remarks = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:

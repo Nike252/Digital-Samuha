@@ -72,7 +72,7 @@ const LedgerOverviewTab = ({ transactions, highlightedTxId, txRefs, userRole, on
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-gray-500 text-sm">{tx.date}</span>
                   {userRole === 'adhakshya' && (
-                    !['loan_disbursement', 'loan_repayment'].includes(tx.type) ? (
+                    !['loan_disbursement', 'loan_repayment'].includes(tx.type) && tx.meeting_status !== 'completed' ? (
                       <button
                         onClick={() => onDeleteTransaction(tx.id)}
                         className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all shrink-0"
@@ -81,7 +81,7 @@ const LedgerOverviewTab = ({ transactions, highlightedTxId, txRefs, userRole, on
                         <Trash2 size={16} />
                       </button>
                     ) : (
-                      <div className="p-2 text-gray-300" title="System Protected Transaction">
+                      <div className="p-2 text-gray-300" title={tx.meeting_status === 'completed' ? "Meeting Finalized - Record Locked" : "System Protected Transaction"}>
                         <Trash2 size={16} className="opacity-30" />
                       </div>
                     )

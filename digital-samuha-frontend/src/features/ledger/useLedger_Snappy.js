@@ -168,10 +168,15 @@ const useLedger = (user) => {
   };
 
   const handleDeleteTransaction = async (txId) => {
+    const tx = transactions.find(t => t.id === txId);
+    const isFinancialCore = tx && ['saving', 'fine'].includes(tx.type);
+
     showConfirm({
-      title: 'Delete Transaction',
-      message: 'Are you sure you want to delete this transaction? This cannot be undone.',
-      confirmText: 'Delete',
+      title: isFinancialCore ? '⚠️ Critical Deletion' : 'Delete Transaction',
+      message: isFinancialCore 
+        ? `You are deleting a ${tx.type.toUpperCase()}. This will cause the member to show as "UNPAID" in their next meeting and create arrears. Are you absolutely sure?`
+        : 'Are you sure you want to delete this transaction? This action cannot be undone.',
+      confirmText: isFinancialCore ? 'Yes, Delete & Create Arrears' : 'Delete',
       type: 'danger',
       onConfirm: async () => {
         try {
