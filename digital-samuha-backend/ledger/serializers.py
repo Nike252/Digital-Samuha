@@ -7,14 +7,22 @@ class TransactionSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     user_id = serializers.ReadOnlyField(source='user.id')
     meeting_status = serializers.ReadOnlyField(source='meeting.status')
+    is_latest_meeting = serializers.SerializerMethodField()
     
     class Meta:
         model = Transaction
         fields = [
             'id', 'samuha', 'user', 'user_id', 'user_details', 'meeting', 
-            'meeting_status', 'type', 'amount', 'description', 'date', 'created_at'
+            'meeting_status', 'is_latest_meeting', 'type', 'amount', 'description', 'date', 'created_at'
         ]
-        read_only_fields = ['id', 'samuha', 'created_at', 'user_id', 'meeting_status']
+        read_only_fields = ['id', 'samuha', 'created_at', 'user_id', 'meeting_status', 'is_latest_meeting']
+
+    def get_is_latest_meeting(self, obj):
+        if not obj.meeting_id:
+            return True
+        from attendance.models import Meeting
+        latest = Meeting.objects.filter(samuha=obj.samuha).order_by('-date', '-id').first()
+        return latest and obj.meeting_id == latest.id
 
 class LoanSerializer(serializers.ModelSerializer):
     user_details = UserSerializer(source='user', read_only=True)

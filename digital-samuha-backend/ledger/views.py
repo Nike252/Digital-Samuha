@@ -55,12 +55,24 @@ class TransactionViewSet(LedgerBaseViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         
-        # 🛡️ THE DEADBOLT: If meeting is already completed, block deletion!
-        if instance.meeting and instance.meeting.status == 'completed':
-            return Response(
-                {"detail": "Cannot delete transactions from a COMPLETED meeting to preserve historical accuracy."},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        # 🛡️ THE TOTAL LOCKDOWN: Protect ALL past meetings
+        if instance.meeting:
+            from attendance.models import Meeting
+            latest_meeting = Meeting.objects.filter(samuha=instance.samuha).order_by('-date', '-id').first()
+            
+            # If this isn't the latest meeting, it's considered "Locked History"
+            if latest_meeting and instance.meeting_id != latest_meeting.id:
+                return Response(
+                    {"detail": "Cannot delete transactions from past meetings to preserve historical integrity."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Additional check for completed status
+            if instance.meeting.status == 'completed':
+                return Response(
+                    {"detail": "This meeting is FINALIZED. Deletion is prohibited."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
             
         # Block deletion of critical transaction types
         protected_types = [
