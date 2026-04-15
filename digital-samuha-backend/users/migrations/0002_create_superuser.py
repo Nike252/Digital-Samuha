@@ -3,10 +3,10 @@ import os
 
 def create_superuser(apps, schema_editor):
     from users.models import User
-    # Hardcoding the credentials for a guaranteed "No-Fail" login
-    phone = '9807615242'
-    password = 'Nikesh@123'
-    email = 'nikes@gmail.com'
+    # Pull credentials from environment variables (never hardcode secrets!)
+    phone = os.getenv('SUPERUSER_PHONE', '9800000000')
+    password = os.getenv('SUPERUSER_PASSWORD', 'ChangeMe@123')
+    email = os.getenv('SUPERUSER_EMAIL', 'admin@example.com')
     
     user = User.objects.filter(phone=phone).first()
     if not user:

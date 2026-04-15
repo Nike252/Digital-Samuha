@@ -1,11 +1,12 @@
 from django.db import migrations
 
 def force_reset_admin(apps, schema_editor):
+    import os
     from users.models import User
-    # YOUR SPECIFIC CREDENTIALS
-    phone = '9807615242'
-    password = 'Nikesh@123'
-    email = 'nikes@gmail.com'
+    # Secure: Pull from environment variables
+    phone = os.getenv('SUPERUSER_PHONE', '9800000000')
+    password = os.getenv('SUPERUSER_PASSWORD', 'ChangeMe@123')
+    email = os.getenv('SUPERUSER_EMAIL', 'admin@example.com')
     
     # 1. Ensure the user exists and is fully enabled
     user, created = User.objects.get_or_create(phone=phone)
