@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Samuha
+from .models import Samuha, Membership, ExitRequest
 
 
 class SamuhaRegisterSerializer(serializers.ModelSerializer):
@@ -23,6 +23,9 @@ class SamuhaRegisterSerializer(serializers.ModelSerializer):
             "adhakshya_full_name",
             "adhakshya_phone",
             "adhakshya_email",
+            "adhakshya_citizenship_no",
+            "adhakshya_citizenship_front",
+            "adhakshya_citizenship_back",
             "is_registered_with_government",
             "proof_document",
             "samuha_code",
@@ -60,5 +63,30 @@ class SamuhaSettingsSerializer(serializers.ModelSerializer):
             "saving_amount"
         ]
         read_only_fields = ["id", "samuha_name"]
+
+
+class ExitRequestSerializer(serializers.ModelSerializer):
+    """
+    Serializer for member exit requests.
+    """
+    user_name = serializers.CharField(source='user.full_name', read_only=True)
+    user_phone = serializers.CharField(source='user.phone', read_only=True)
+
+    class Meta:
+        model = ExitRequest
+        fields = [
+            "id",
+            "user",
+            "user_name",
+            "user_phone",
+            "samuha",
+            "reason",
+            "status",
+            "settlement_amount",
+            "created_at",
+            "processed_at",
+            "processed_by"
+        ]
+        read_only_fields = ["id", "user", "samuha", "status", "settlement_amount", "created_at", "processed_at", "processed_by"]
 
 

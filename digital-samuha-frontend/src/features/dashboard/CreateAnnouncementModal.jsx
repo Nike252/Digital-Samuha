@@ -74,113 +74,133 @@ const CreateAnnouncementModal = ({ isOpen, onClose, onSubmit, editingAnnouncemen
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
+      <div className="bg-white/80 backdrop-blur-2xl border border-white/50 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-200">
+        
+        {/* Background Glows (Subtler for better readability) */}
+        <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-500/5 rounded-full blur-[80px] pointer-events-none" />
+
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {editingAnnouncement ? 'Edit Announcement' : 'Create Announcement'}
-          </h2>
+        <div className="flex items-center justify-between p-8 bg-white/40 border-b border-gray-200/20 relative z-10">
+          <div>
+            <h2 className="text-2xl font-black text-gray-900 tracking-tight">
+              {editingAnnouncement ? 'Edit Announcement' : 'Create Announcement'}
+            </h2>
+            <p className="text-sm font-bold text-gray-600 uppercase tracking-widest mt-1">
+              {editingAnnouncement ? 'Refine your notice' : 'Post to the community board'}
+            </p>
+          </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2.5 bg-gray-900/5 hover:bg-gray-900/10 rounded-2xl transition-all hover:rotate-90 text-gray-700 shadow-sm"
           >
-            <X size={24} className="text-gray-500" />
+            <X size={20} />
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {errors.submit && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-              {errors.submit}
-            </div>
-          )}
-
-          <FormInput
-            label="Title"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            error={errors.title}
-            placeholder="e.g., Monthly Meeting Reminder"
-            required
-          />
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Message <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              name="message"
-              value={formData.message}
-              onChange={handleChange}
-              rows={10}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none resize-none"
-              placeholder="Dear all,&#10;&#10;Write your announcement message here...&#10;&#10;Thank you."
-              required
-            />
-            {errors.message && (
-              <p className="text-xs text-red-500 mt-1">{errors.message}</p>
+        {/* Form Container (Scrollable) */}
+        <div className="flex-1 overflow-y-auto relative z-10 custom-scrollbar">
+          <form onSubmit={handleSubmit} className="p-8 space-y-8 text-gray-900">
+            {errors.submit && (
+              <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl text-xs font-black text-rose-600">
+                {errors.submit}
+              </div>
             )}
-            <p className="text-xs text-gray-500 mt-2">
-              Tip: Start with &quot;Dear all,&quot; and end with your signature for a professional notice.
-            </p>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Display From (Optional)
-            </label>
-            <input
-              type="date"
-              name="display_from"
-              value={formData.display_from}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Leave blank to show immediately
-            </p>
-          </div>
+            <div className="space-y-6">
+              <div className="group">
+                <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-3 ml-1">
+                  Announcement Title <span className="text-rose-500">*</span>
+                </label>
+                <input
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    placeholder="e.g., Monthly Meeting Reminder"
+                    className="w-full px-5 h-14 rounded-2xl bg-white/60 border border-gray-200 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none text-gray-900 font-bold placeholder:text-gray-400"
+                    required
+                />
+                {errors.title && <p className="text-[10px] text-rose-500 font-black mt-2 ml-1">{errors.title}</p>}
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Display Until (Optional)
-            </label>
-            <input
-              type="date"
-              name="display_until"
-              value={formData.display_until}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Leave blank to show permanently
-            </p>
-          </div>
+              <div className="group">
+                <label className="block text-xs font-black text-gray-700 uppercase tracking-widest mb-3 ml-1">
+                  Announcement Message <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  rows={8}
+                  className="w-full px-5 py-4 rounded-[1.5rem] bg-white/60 border border-gray-200 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none resize-none text-gray-900 font-bold placeholder:text-gray-400 leading-relaxed"
+                  placeholder="Dear all,&#10;&#10;Write your announcement message here...&#10;&#10;Thank you."
+                  required
+                />
+                <div className="flex items-center justify-between mt-3 px-1">
+                   <p className="text-[11px] text-gray-600 font-bold">
+                    💡 Tip: Start with "Dear all" for a professional tone.
+                  </p>
+                  {errors.message && (
+                    <p className="text-[10px] text-rose-500 font-black">{errors.message}</p>
+                  )}
+                </div>
+              </div>
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              className="flex-1"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              className="flex-1"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (editingAnnouncement ? 'Updating...' : 'Posting...') : (editingAnnouncement ? 'Update Announcement' : 'Post Announcement')}
-            </Button>
-          </div>
-        </form>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="block text-xs font-black text-gray-700 uppercase tracking-widest ml-1">
+                    Display From
+                  </label>
+                  <input
+                    type="date"
+                    name="display_from"
+                    value={formData.display_from}
+                    onChange={handleChange}
+                    className="w-full px-5 h-14 rounded-2xl bg-white/60 border border-gray-200 focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none text-sm font-black text-gray-800"
+                  />
+                  <p className="text-[10px] text-gray-500 font-bold ml-1">Leave blank for immediate</p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-black text-gray-700 uppercase tracking-widest ml-1">
+                    Display Until
+                  </label>
+                  <input
+                    type="date"
+                    name="display_until"
+                    value={formData.display_until}
+                    onChange={handleChange}
+                    className="w-full px-5 h-14 rounded-2xl bg-white/60 border border-gray-200 focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none text-sm font-black text-gray-800"
+                  />
+                  <p className="text-[10px] text-gray-500 font-bold ml-1">Leave blank for permanent</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-4 pt-4 pb-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                className="flex-1 rounded-2xl h-16 font-black uppercase tracking-widest text-xs border-gray-300 bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all active:scale-95 shadow-sm"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                className="flex-1 rounded-2xl h-16 font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-xl shadow-indigo-100"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Processing...' : (editingAnnouncement ? 'Update Notice' : 'Post Announcement')}
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   )

@@ -11,6 +11,9 @@ const useSamuhaRegistration = (navigate) => {
     adhakshya_full_name: '',
     adhakshya_phone: '',
     adhakshya_email: '',
+    adhakshya_citizenship_no: '',
+    adhakshya_citizenship_front: null,
+    adhakshya_citizenship_back: null,
     is_registered_with_government: false,
     proof_document: null
   });
@@ -22,10 +25,27 @@ const useSamuhaRegistration = (navigate) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : type === 'file' ? files[0] : value
-    }));
+    
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : type === 'file' ? files[0] : value
+      };
+      
+      // Cascading logic: Reset district if province changes
+      if (name === 'province') {
+        newData.district = '';
+        newData.municipality = '';
+      }
+      
+      // Reset municipality if district changes
+      if (name === 'district') {
+        newData.municipality = '';
+      }
+      
+      return newData;
+    });
+
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -45,6 +65,10 @@ const useSamuhaRegistration = (navigate) => {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.adhakshya_email)) {
       newErrors.adhakshya_email = 'Invalid email format';
     }
+    if (!formData.adhakshya_citizenship_no.trim()) newErrors.adhakshya_citizenship_no = 'Citizenship number is required';
+    if (!formData.adhakshya_citizenship_front) newErrors.adhakshya_citizenship_front = 'Front side photo is required';
+    if (!formData.adhakshya_citizenship_back) newErrors.adhakshya_citizenship_back = 'Back side photo is required';
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -67,6 +91,9 @@ const useSamuhaRegistration = (navigate) => {
       formDataToSend.append('adhakshya_full_name', formData.adhakshya_full_name);
       formDataToSend.append('adhakshya_phone', formData.adhakshya_phone);
       formDataToSend.append('adhakshya_email', formData.adhakshya_email);
+      formDataToSend.append('adhakshya_citizenship_no', formData.adhakshya_citizenship_no);
+      formDataToSend.append('adhakshya_citizenship_front', formData.adhakshya_citizenship_front);
+      formDataToSend.append('adhakshya_citizenship_back', formData.adhakshya_citizenship_back);
       formDataToSend.append('is_registered_with_government', formData.is_registered_with_government);
       
       if (formData.proof_document) {
@@ -84,6 +111,7 @@ const useSamuhaRegistration = (navigate) => {
       setFormData({
         samuha_name: '', province: '', district: '', municipality: '', ward_number: '',
         adhakshya_full_name: '', adhakshya_phone: '', adhakshya_email: '',
+        adhakshya_citizenship_no: '', adhakshya_citizenship_front: null, adhakshya_citizenship_back: null,
         is_registered_with_government: false, proof_document: null
       });
       setErrors({});

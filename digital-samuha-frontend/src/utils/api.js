@@ -57,10 +57,33 @@ export const apiRequest = async (endpoint, options = {}) => {
     if (!response.ok) {
       // Handle validation errors
       if (response.status === 400 && data) {
-        // Extract a clean error message instead of stringifying the whole object
-        const firstErrorKey = Object.keys(data)[0];
-        const errorVal = data[firstErrorKey];
-        const message = Array.isArray(errorVal) ? errorVal[0] : (typeof errorVal === 'string' ? errorVal : 'Validation error');
+        // Ultimate error extractor: searches for the first string in a potentially nested structure
+        const extractMessage = (obj) => {
+          if (typeof obj === 'string') return obj;
+          if (Array.isArray(obj)) {
+            for (const item of obj) {
+              const res = extractMessage(item);
+              if (res) return res;
+            }
+          } else if (typeof obj === 'object' && obj !== null) {
+            // Prioritize common error keys
+            const priorityKeys = ['detail', 'error', 'message', 'non_field_errors'];
+            for (const key of priorityKeys) {
+              if (obj[key]) {
+                const res = extractMessage(obj[key]);
+                if (res) return res;
+              }
+            }
+            // Fallback to searching all keys
+            for (const key of Object.keys(obj)) {
+              const res = extractMessage(obj[key]);
+              if (res) return res;
+            }
+          }
+          return null;
+        };
+
+        const message = extractMessage(data) || 'Validation error';
         throw new Error(message);
       }
       // Handle authentication errors
@@ -108,9 +131,10 @@ export const authAPI = {
     return response
   },
   signup: async (formData) => {
+    const isFormData = formData instanceof FormData
     const response = await apiRequest('/auth/signup/', {
       method: 'POST',
-      body: JSON.stringify(formData),
+      body: isFormData ? formData : JSON.stringify(formData),
     })
     // Do NOT store tokens - user must login separately
     return response
@@ -209,6 +233,24 @@ export const samuhaAPI = {
   },
   checkSamuhaCode: async (code, role) => {
     return apiRequest(`/samuha/check-code/?code=${code}&role=${role}`, { method: 'GET' })
+  },
+  getExitPreview: async (membershipId) => {
+    return apiRequest(`/samuha/members/${membershipId}/exit-preview/`, { method: 'GET' })
+  },
+  submitExitRequest: async (reason) => {
+    return apiRequest('/samuha/exit-requests/', {
+      method: 'POST',
+      body: JSON.stringify({ reason })
+    })
+  },
+  getExitRequests: async () => {
+    return apiRequest('/samuha/exit-requests/', { method: 'GET' })
+  },
+  processExitRequest: async (id, status) => {
+    return apiRequest(`/samuha/exit-requests/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    })
   }
 }
 

@@ -12,7 +12,10 @@ const useSignUp = (navigate, onSignUpSuccess) => {
     password: '',
     confirm_password: '',
     role: '',
-    samuha_code: ''
+    samuha_code: '',
+    citizenship_no: '',
+    citizenship_front: null,
+    citizenship_back: null
   });
 
   const [errors, setErrors] = useState({});
@@ -32,7 +35,8 @@ const useSignUp = (navigate, onSignUpSuccess) => {
               first_name: res.data.first_name || prev.first_name,
               last_name: res.data.last_name || prev.last_name,
               phone: res.data.phone || prev.phone,
-              email: res.data.email || prev.email
+              email: res.data.email || prev.email,
+              citizenship_no: res.data.citizenship_no || prev.citizenship_no
             }));
             showToast(`Welcome back, ${res.data.first_name}! Your details have been auto-filled from your Samuha registration.`, 'info');
           }
@@ -49,8 +53,11 @@ const useSignUp = (navigate, onSignUpSuccess) => {
   }, [formData.samuha_code, formData.role]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, files } = e.target;
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: type === 'file' ? files[0] : value 
+    }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     setSubmitError('');
   };
@@ -66,6 +73,11 @@ const useSignUp = (navigate, onSignUpSuccess) => {
     if (formData.password !== formData.confirm_password) newErrors.confirm_password = 'Passwords do not match';
     if (!formData.role) newErrors.role = 'Role is required';
     if (!formData.samuha_code.trim()) newErrors.samuha_code = 'Samuha code is required';
+    if (formData.role !== 'adhakshya') {
+      if (!formData.citizenship_no.trim()) newErrors.citizenship_no = 'Citizenship number is required';
+      if (!formData.citizenship_front) newErrors.citizenship_front = 'Front side photo is required';
+      if (!formData.citizenship_back) newErrors.citizenship_back = 'Back side photo is required';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -78,9 +90,20 @@ const useSignUp = (navigate, onSignUpSuccess) => {
     setIsSubmitting(true);
 
     try {
-      await authAPI.signup(formData);
+      const formDataToSend = new FormData();
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== null) {
+          formDataToSend.append(key, formData[key]);
+        }
+      });
+
+      await authAPI.signup(formDataToSend);
       showToast('Account created successfully! Please login.', 'success');
-      setFormData({ phone: '', first_name: '', last_name: '', email: '', password: '', confirm_password: '', role: '', samuha_code: '' });
+      setFormData({ 
+        phone: '', first_name: '', last_name: '', email: '', 
+        password: '', confirm_password: '', role: '', samuha_code: '',
+        citizenship_no: '', citizenship_front: null, citizenship_back: null
+      });
       
       if (onSignUpSuccess) onSignUpSuccess();
       else navigate('/login');

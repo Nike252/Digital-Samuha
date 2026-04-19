@@ -31,14 +31,30 @@ const FormInput = ({
             <Icon size={20} />
           </div>
         )}
-        <input
-          id={id}
-          type={inputType}
-          placeholder={placeholder}
-          value={value ?? ''}
-          className={`w-full px-4 py-3 bg-gray-50 border-2 rounded-xl text-gray-900 placeholder:text-gray-400 font-medium transition-all focus:outline-none focus:ring-4 focus:ring-indigo-100 ${Icon ? 'pl-11' : ''} ${isPasswordField ? 'pr-12' : ''} ${error ? 'border-rose-100 focus:border-rose-200' : 'border-transparent focus:border-indigo-600/20'}`}
-          {...props}
-        />
+        {type === 'select' ? (
+          <select
+            id={id}
+            value={value ?? ''}
+            className={`w-full px-4 py-3 bg-gray-50 border-2 rounded-xl text-gray-900 placeholder:text-gray-400 font-medium transition-all focus:outline-none focus:ring-4 focus:ring-indigo-100 appearance-none cursor-pointer ${Icon ? 'pl-11' : ''} ${error ? 'border-rose-100 focus:border-rose-200' : 'border-transparent focus:border-indigo-600/20'}`}
+            {...props}
+          >
+            {placeholder && <option value="" disabled>{placeholder}</option>}
+            {props.options?.map(opt => (
+              <option key={opt.value || opt} value={opt.value || opt}>
+                {opt.label || opt}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            id={id}
+            type={inputType}
+            placeholder={placeholder}
+            value={value ?? ''}
+            className={`w-full px-4 py-3 bg-gray-50 border-2 rounded-xl text-gray-900 placeholder:text-gray-400 font-medium transition-all focus:outline-none focus:ring-4 focus:ring-indigo-100 ${Icon ? 'pl-11' : ''} ${isPasswordField ? 'pr-12' : ''} ${error ? 'border-rose-100 focus:border-rose-200' : 'border-transparent focus:border-indigo-600/20'}`}
+            {...props}
+          />
+        )}
         {isPasswordField && (
           <button
             type="button"

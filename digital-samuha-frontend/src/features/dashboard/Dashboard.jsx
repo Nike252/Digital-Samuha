@@ -7,13 +7,58 @@ import SummaryStats from './SummaryStats';
 import DashboardActions from './DashboardActions';
 import MeetingCard from './MeetingCard';
 import UpgradeCTA from './UpgradeCTA';
+import ExitRequestModal from '../members/ExitRequestModal';
+import { toast } from 'react-hot-toast';
+import { samuhaAPI } from '../../utils/api';
 
 export const Dashboard = ({ role, user, onLogout, onNavigate, currentPath }) => {
   const {
     nextMeeting, samuhaSettings, recentTransactions,
     subscription, loading, config, userName, welcomeMsg,
-    formatTime, stats, handleQuickAction
+    formatTime, stats, handleQuickAction: originalHandleQuickAction,
+    dashboardStats
   } = useDashboard(role, user, onNavigate);
+
+  const [isExitModalOpen, setIsExitModalOpen] = React.useState(false);
+  const [isSubmittingExit, setIsSubmittingExit] = React.useState(false);
+
+  const handleQuickAction = async (action) => {
+    if (action === 'request_exit') {
+      // 1. Check for active loans using dashboard stats
+      const loanAmount = dashboardStats?.active_loans_total || 0;
+      if (loanAmount > 0) {
+        toast.error(`Unable to leave the Samuha. You have pending loan dues of Rs. ${loanAmount.toLocaleString()}.`, {
+          duration: 5000,
+          icon: '🛑',
+          style: {
+            borderRadius: '12px',
+            background: '#333',
+            color: '#fff',
+          },
+        });
+        return;
+      }
+      setIsExitModalOpen(true);
+      return;
+    }
+    originalHandleQuickAction(action);
+  };
+
+  const handleExitSubmit = async (reason) => {
+    setIsSubmittingExit(true);
+    try {
+      await samuhaAPI.submitExitRequest(reason);
+      toast.success('Your exit request has been submitted to the Adhakshya for review.', {
+        icon: '🚪',
+        style: { borderRadius: '12px' }
+      });
+      setIsExitModalOpen(false);
+    } catch (err) {
+      toast.error(err.message || 'Failed to submit exit request.');
+    } finally {
+      setIsSubmittingExit(false);
+    }
+  };
 
   return (
     <MainLayout userRole={role} onLogout={onLogout} user={user} onNavigate={onNavigate} currentPath={currentPath}>
@@ -38,6 +83,13 @@ export const Dashboard = ({ role, user, onLogout, onNavigate, currentPath }) => 
       </div>
 
       <div className="mt-8"><NoticeBoard userRole={role} currentUserId={user?.id} /></div>
+
+      <ExitRequestModal 
+        isOpen={isExitModalOpen} 
+        onClose={() => setIsExitModalOpen(false)} 
+        onSubmit={handleExitSubmit}
+        isSubmitting={isSubmittingExit}
+      />
     </MainLayout>
   );
 };

@@ -5,8 +5,9 @@ import { useUI } from '../../context/UIContext';
 const useMembers = (user) => {
   const { showToast } = useUI();
   const [members, setMembers] = useState([]);
+  const [exitRequests, setExitRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('active'); // 'active', 'pending', 'all'
+  const [activeTab, setActiveTab] = useState('active'); // 'active', 'pending', 'all', 'exit_requests'
   const [searchQuery, setSearchQuery] = useState('');
   const isAdmin = ['adhakshya', 'co_adhakshya'].includes(user?.role);
 
@@ -22,7 +23,20 @@ const useMembers = (user) => {
     }
   };
 
-  useEffect(() => { fetchMembers(); }, []);
+  const fetchExitRequests = async () => {
+    if (!isAdmin) return;
+    try {
+      const res = await samuhaAPI.getExitRequests();
+      setExitRequests(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => { 
+    fetchMembers(); 
+    if (isAdmin) fetchExitRequests();
+  }, [isAdmin]);
 
   const handleUpdateStatus = async (membershipId, status) => {
     try {
@@ -34,10 +48,24 @@ const useMembers = (user) => {
     }
   };
 
+  const handleProcessExit = async (requestId, status) => {
+    try {
+      await samuhaAPI.processExitRequest(requestId, status);
+      fetchExitRequests();
+      fetchMembers();
+      showToast(`Member exit ${status === 'approved' ? 'approved' : 'rejected'}`, 'success');
+      return true;
+    } catch (err) {
+      showToast(err.message, 'error');
+      return false;
+    }
+  };
+
   const filteredMembers = members.filter(m => {
     // 1. Filter by Tab
     if (activeTab === 'active' && m.status !== 'active') return false;
     if (activeTab === 'pending' && m.status !== 'pending') return false;
+    if (activeTab === 'exit_requests') return false; // Exit requests has its own view
     
     // 2. Filter by Search Query
     if (searchQuery.trim()) {
@@ -49,9 +77,9 @@ const useMembers = (user) => {
   });
 
   return {
-    members, loading, activeTab, setActiveTab, isAdmin,
-    fetchMembers, handleUpdateStatus, filteredMembers,
-    searchQuery, setSearchQuery
+    members, exitRequests, loading, activeTab, setActiveTab, isAdmin,
+    fetchMembers, fetchExitRequests, handleUpdateStatus, handleProcessExit, 
+    filteredMembers, searchQuery, setSearchQuery
   };
 };
 

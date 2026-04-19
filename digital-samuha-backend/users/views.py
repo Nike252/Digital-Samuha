@@ -34,8 +34,10 @@ class SignUpView(APIView):
     User signup with Samuha code.
     Creates User + Membership. User must login separately after signup.
     """
+    from rest_framework.parsers import MultiPartParser, FormParser
 
     permission_classes = [permissions.AllowAny]
+    parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
         try:

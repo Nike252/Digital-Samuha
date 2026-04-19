@@ -176,7 +176,7 @@ const LoansTab = ({
                 </div>
               )}
 
-              {(isAdhakshya || loan.user_details.id === currentUserId) && loan.status === 'active' && (
+              {isAdhakshya && loan.status === 'active' && (
                 <div className="flex flex-col items-end gap-3 self-end md:self-center">
                   <button
                     onClick={() => {
@@ -188,7 +188,6 @@ const LoansTab = ({
                     <Receipt size={18} />
                     Repay Loan
                   </button>
-                  {loan.user_details.id !== currentUserId && <span className="text-[10px] text-gray-400 font-bold px-2">Adhakshya Override</span>}
                 </div>
               )}
 

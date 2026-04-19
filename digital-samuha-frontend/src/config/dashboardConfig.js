@@ -1,4 +1,4 @@
-import { Home, DollarSign, Users, FileText, Wallet, CreditCard, Calendar, MessageCircle, Settings, Shield, Plus, FilePlus, CheckCircle, Mic, MessageSquare, ShieldCheck } from 'lucide-react';
+import { Home, DollarSign, Users, FileText, Wallet, CreditCard, Calendar, MessageCircle, Settings, Shield, Plus, FilePlus, CheckCircle, Mic, MessageSquare, ShieldCheck, LogOut } from 'lucide-react';
 
 export const ROLE_CONFIG = {
     adhakshya: {
@@ -64,7 +64,8 @@ export const ROLE_CONFIG = {
         ],
         quickActions: [
             { label: 'Ask AI Bot', action: 'chat_ai', icon: 'MessageSquare' },
-            { label: 'Request Loan', action: 'req_loan', icon: 'DollarSign' }
+            { label: 'Request Loan', action: 'req_loan', icon: 'DollarSign' },
+            { label: 'Request to Leave', action: 'request_exit', icon: 'LogOut' }
         ],
         welcomeMsg: "Namaste. Here is your personal financial status."
     },

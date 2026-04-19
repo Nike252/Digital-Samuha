@@ -77,6 +77,11 @@ class SignUpSerializer(serializers.Serializer):
         help_text="Role: adhakshya, co_adhakshya, or member",
     )
     samuha_code = serializers.CharField(required=True, max_length=32)
+    
+    # NEW: Identity Verification Fields (Required=False allows validator to handle fallback)
+    citizenship_no = serializers.CharField(required=False, max_length=50, allow_blank=True)
+    citizenship_front = serializers.FileField(required=False, allow_null=True)
+    citizenship_back = serializers.FileField(required=False, allow_null=True)
 
     def validate(self, attrs):
         # Check passwords match
@@ -110,6 +115,42 @@ class SignUpSerializer(serializers.Serializer):
                     "samuha_code": "This Samuha is not available for signup. Please contact the administrator."
                 })
 
+        # CRITICAL: Enforce ONE Adhakshya and ONE Co-Adhakshya per Samuha
+        role = attrs.get("role")
+        if role in [Membership.ROLE_ADHAKSHYA, Membership.ROLE_CO_ADHAKSHYA]:
+            existing_leader = Membership.objects.filter(
+                samuha=samuha,
+                role=role,
+                status=Membership.STATUS_ACTIVE
+            ).exists()
+            if existing_leader:
+                role_label = "Adhakshya" if role == Membership.ROLE_ADHAKSHYA else "Co-Adhakshya"
+                raise serializers.ValidationError({
+                    "role": f"This Samuha already has an active {role_label}. There can only be one."
+                })
+
+        # Identity Verification Fallback / Validation
+        citizenship_no = attrs.get('citizenship_no')
+        citizenship_front = attrs.get('citizenship_front')
+        citizenship_back = attrs.get('citizenship_back')
+
+        if role == Membership.ROLE_ADHAKSHYA:
+            # For Adhakshya, we can fallback to Samuha registration details if not provided
+            if not citizenship_no:
+                attrs['citizenship_no'] = samuha.adhakshya_citizenship_no
+            if not citizenship_front and not samuha.adhakshya_citizenship_front:
+                raise serializers.ValidationError({"citizenship_front": "Front photo is required."})
+            if not citizenship_back and not samuha.adhakshya_citizenship_back:
+                raise serializers.ValidationError({"citizenship_back": "Back photo is required."})
+        else:
+            # For others, they must provide their own ID
+            if not citizenship_no:
+                raise serializers.ValidationError({"citizenship_no": "Citizenship number is required."})
+            if not citizenship_front:
+                raise serializers.ValidationError({"citizenship_front": "Front photo is required."})
+            if not citizenship_back:
+                raise serializers.ValidationError({"citizenship_back": "Back photo is required."})
+
         attrs["samuha"] = samuha
 
         # Check if user already exists
@@ -125,6 +166,11 @@ class SignUpSerializer(serializers.Serializer):
         validated_data.pop("confirm_password")
         validated_data.pop("samuha_code")  # Remove samuha_code - not a User field
         role = validated_data.pop("role")
+        
+        # Pop Identity Verification fields - not User fields
+        c_no = validated_data.pop("citizenship_no", None)
+        c_front_input = validated_data.pop("citizenship_front", None)
+        c_back_input = validated_data.pop("citizenship_back", None)
 
         # Create User account
         user = User.objects.create_user(password=password, **validated_data)
@@ -133,11 +179,23 @@ class SignUpSerializer(serializers.Serializer):
         is_approved = role in [Membership.ROLE_ADHAKSHYA, Membership.ROLE_CO_ADHAKSHYA]
 
         # Create Membership linking User to Samuha
+        # Fallback to Samuha documents if Adhakshya hasn't provided new ones
+        c_front = c_front_input
+        c_back = c_back_input
+        
+        if role == Membership.ROLE_ADHAKSHYA:
+            if not c_front: c_front = samuha.adhakshya_citizenship_front
+            if not c_back: c_back = samuha.adhakshya_citizenship_back
+
         membership = Membership.objects.create(
             user=user,
             samuha=samuha,
             role=role,
             is_approved=is_approved,
+            status=Membership.STATUS_ACTIVE if is_approved else Membership.STATUS_PENDING,
+            citizenship_no=c_no or (samuha.adhakshya_citizenship_no if role == Membership.ROLE_ADHAKSHYA else None),
+            citizenship_front=c_front,
+            citizenship_back=c_back,
         )
 
         return {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button, FormInput, FormFileInput, FormCheckbox } from '../../components/ui';
+import { NEPAL_DATA } from '../../utils/nepalData';
 
 const RegistrationForm = ({ 
   formData, 
@@ -46,10 +47,52 @@ const RegistrationForm = ({
                     className="text-lg"
                   />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <FormInput label="Province" name="province" value={formData.province} onChange={handleChange} error={errors.province} placeholder="Bagmati" required />
-                    <FormInput label="District" name="district" value={formData.district} onChange={handleChange} error={errors.district} placeholder="Kathmandu" required />
-                    <FormInput label="Municipality" name="municipality" value={formData.municipality} onChange={handleChange} error={errors.municipality} placeholder="Kathmandu Metro" required />
-                    <FormInput label="Ward No." name="ward_number" value={formData.ward_number} onChange={handleChange} error={errors.ward_number} placeholder="32" required />
+                    <FormInput 
+                      label="Province" 
+                      name="province" 
+                      type="select"
+                      value={formData.province} 
+                      onChange={handleChange} 
+                      error={errors.province} 
+                      placeholder="Select Province" 
+                      options={NEPAL_DATA.provinces}
+                      required 
+                    />
+                    <FormInput 
+                      label="District" 
+                      name="district" 
+                      type="select"
+                      value={formData.district} 
+                      onChange={handleChange} 
+                      error={errors.district} 
+                      placeholder="Select District" 
+                      options={formData.province ? NEPAL_DATA.districts[formData.province] : []}
+                      disabled={!formData.province}
+                      required 
+                    />
+                    <FormInput 
+                      label="Municipality" 
+                      name="municipality" 
+                      type={formData.district && NEPAL_DATA.municipalities[formData.district] ? "select" : "text"}
+                      value={formData.municipality} 
+                      onChange={handleChange} 
+                      error={errors.municipality} 
+                      placeholder={formData.district && NEPAL_DATA.municipalities[formData.district] ? "Select Municipality" : "e.g. Kathmandu Metro"} 
+                      options={formData.district ? (NEPAL_DATA.municipalities[formData.district] || []) : []}
+                      disabled={!formData.district}
+                      required 
+                    />
+                    <FormInput 
+                      label="Ward No." 
+                      name="ward_number" 
+                      type="select"
+                      value={formData.ward_number} 
+                      onChange={handleChange} 
+                      error={errors.ward_number} 
+                      placeholder="Select Ward" 
+                      options={NEPAL_DATA.wardNumbers}
+                      required 
+                    />
                   </div>
                </div>
             </div>
@@ -63,11 +106,34 @@ const RegistrationForm = ({
                </div>
                <div className="pl-11 space-y-5">
                   <FormInput label="Full Name" name="adhakshya_full_name" value={formData.adhakshya_full_name} onChange={handleChange} error={errors.adhakshya_full_name} placeholder="e.g. Ram Bahadur Thapa" required />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                     <FormInput label="Phone Number" name="adhakshya_phone" type="tel" value={formData.adhakshya_phone} onChange={handleChange} error={errors.adhakshya_phone} placeholder="98XXXXXXXX" required />
-                     <FormInput label="Email Address" name="adhakshya_email" type="email" value={formData.adhakshya_email} onChange={handleChange} error={errors.adhakshya_email} placeholder="ram@example.com" required />
-                  </div>
-               </div>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <FormInput label="Phone Number" name="adhakshya_phone" type="tel" value={formData.adhakshya_phone} onChange={handleChange} error={errors.adhakshya_phone} placeholder="98XXXXXXXX" required />
+                      <FormInput label="Email Address" name="adhakshya_email" type="email" value={formData.adhakshya_email} onChange={handleChange} error={errors.adhakshya_email} placeholder="ram@example.com" required />
+                   </div>
+                   <div className="pt-4 space-y-5">
+                      <FormInput label="Citizenship Number" name="adhakshya_citizenship_no" value={formData.adhakshya_citizenship_no} onChange={handleChange} error={errors.adhakshya_citizenship_no} placeholder="XX-XX-XX-XXXXX" required />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <FormFileInput
+                          label="Citizenship Photo (Front)"
+                          name="adhakshya_citizenship_front"
+                          accept=".jpg,.jpeg,.png"
+                          onChange={handleChange}
+                          error={errors.adhakshya_citizenship_front}
+                          required
+                          helperText="Clear photo of the front side"
+                        />
+                        <FormFileInput
+                          label="Citizenship Photo (Back)"
+                          name="adhakshya_citizenship_back"
+                          accept=".jpg,.jpeg,.png"
+                          onChange={handleChange}
+                          error={errors.adhakshya_citizenship_back}
+                          required
+                          helperText="Clear photo of the back side"
+                        />
+                      </div>
+                   </div>
+                </div>
             </div>
 
             <div className="border-t border-gray-100"></div>

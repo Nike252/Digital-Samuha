@@ -55,7 +55,7 @@ class TransactionViewSet(LedgerBaseViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         
-        # 🛡️ THE TOTAL LOCKDOWN: Protect ALL past meetings
+        #THE TOTAL LOCKDOWN: Protect ALL past meetings
         if instance.meeting:
             from attendance.models import Meeting
             latest_meeting = Meeting.objects.filter(samuha=instance.samuha).order_by('-date', '-id').first()

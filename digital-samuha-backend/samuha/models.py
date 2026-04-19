@@ -25,6 +25,8 @@ class Samuha(models.Model):
     adhakshya_phone = models.CharField(max_length=20)
     adhakshya_email = models.EmailField()
     adhakshya_citizenship_no = models.CharField(max_length=50, blank=True, null=True, help_text="Citizenship Number of the Adhakshya")
+    adhakshya_citizenship_front = models.FileField(upload_to="adhakshya_id/", blank=True, null=True, help_text="Photo of Adhakshya's Citizenship (Front)")
+    adhakshya_citizenship_back = models.FileField(upload_to="adhakshya_id/", blank=True, null=True, help_text="Photo of Adhakshya's Citizenship (Back)")
 
     is_registered_with_government = models.BooleanField(default=False)
     proof_document = models.FileField(upload_to="proof_documents/", blank=True, null=True)
@@ -139,12 +141,14 @@ class Membership(models.Model):
     STATUS_ACTIVE = "active"
     STATUS_INACTIVE = "inactive"
     STATUS_REJECTED = "rejected"
+    STATUS_EXITED = "exited"
 
     STATUS_CHOICES = [
         (STATUS_PENDING, "Pending"),
         (STATUS_ACTIVE, "Active"),
         (STATUS_INACTIVE, "Inactive"),
         (STATUS_REJECTED, "Rejected"),
+        (STATUS_EXITED, "Exited"),
     ]
 
     user = models.ForeignKey(
@@ -161,6 +165,11 @@ class Membership(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
     joined_at = models.DateTimeField(auto_now_add=True)
     is_approved = models.BooleanField(default=False)  # Legacy - will sync with status
+    
+    # NEW: Identity Verification Fields
+    citizenship_no = models.CharField(max_length=50, blank=True, null=True)
+    citizenship_front = models.FileField(upload_to="identity_documents/", blank=True, null=True)
+    citizenship_back = models.FileField(upload_to="identity_documents/", blank=True, null=True)
 
     class Meta:
         unique_together = [["user", "samuha"]]
@@ -168,5 +177,48 @@ class Membership(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user.phone} - {self.samuha.samuha_name} ({self.get_role_display()} - {self.get_status_display()})"
+
+
+class ExitRequest(models.Model):
+    """
+    Tracks requests from members to leave a Samuha.
+    """
+    STATUS_PENDING = "pending"
+    STATUS_APPROVED = "approved"
+    STATUS_REJECTED = "rejected"
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_APPROVED, "Approved"),
+        (STATUS_REJECTED, "Rejected"),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="exit_requests")
+    samuha = models.ForeignKey(Samuha, on_delete=models.CASCADE, related_name="exit_requests")
+    reason = models.TextField(help_text="Why the member wants to leave")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    
+    settlement_amount = models.DecimalField(
+        max_digits=12, 
+        decimal_places=2, 
+        default=0.00,
+        help_text="The final calculated payout amount"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    processed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name="processed_exits"
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Exit Request: {self.user.first_name} - {self.samuha.samuha_name} ({self.status})"
 
 

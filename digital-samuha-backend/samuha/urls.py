@@ -1,17 +1,22 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 
 from .views import (
     SamuhaRegisterView, SamuhaMembersView, PendingSamuhaListView, 
     ApproveSamuhaView, SamuhaListView, UpdateSamuhaStatusView, 
     UpdateMemberStatusView, SamuhaSettingsView, SamuhaDetailsView,
-    CheckSamuhaCodeView
+    CheckSamuhaCodeView, ExitRequestViewSet, ExitPreviewView
 )
 
+router = DefaultRouter()
+router.register(r'exit-requests', ExitRequestViewSet, basename='exit-requests')
 
 urlpatterns = [
+    path("", include(router.urls)),
     path("register/", SamuhaRegisterView.as_view(), name="samuha-register"),
     path("check-code/", CheckSamuhaCodeView.as_view(), name="samuha-check-code"),
     path("members/", SamuhaMembersView.as_view(), name="samuha-members"),
+    path("members/<int:pk>/exit-preview/", ExitPreviewView.as_view(), name="member-exit-preview"),
     path("pending-list/", PendingSamuhaListView.as_view(), name="samuha-pending-list"),
     path("approve/<int:pk>/", ApproveSamuhaView.as_view(), name="samuha-approve"),
     path("list/", SamuhaListView.as_view(), name="samuha-list"),

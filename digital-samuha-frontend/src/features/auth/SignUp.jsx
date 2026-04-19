@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, FormInput } from '../../components/ui';
+import { Button, FormInput, FormFileInput } from '../../components/ui';
 import AuthLayout from '../../layouts/AuthLayout';
 import { ArrowLeft } from 'lucide-react';
 import useSignUp from './useSignUp';
@@ -51,7 +51,54 @@ const SignUp = ({ onBack, onSignUpSuccess }) => {
              </div>
            )}
         </div>
-        <FormInput label="Samuha Code" name="samuha_code" value={formData.samuha_code} onChange={handleChange} error={errors.samuha_code} placeholder="e.g. SAMUHA-123" required />
+         <div className="pt-2 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-sm font-medium text-gray-700">Citizenship Verification</label>
+              {formData.role === 'adhakshya' && formData.samuha_code && (
+                <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold animate-pulse">
+                  AUTO-SYNC ACTIVE
+                </span>
+              )}
+            </div>
+            
+            <FormInput 
+              label="Citizenship Number" 
+              name="citizenship_no" 
+              value={formData.citizenship_no} 
+              onChange={handleChange} 
+              error={errors.citizenship_no} 
+              placeholder="XX-XX-XX-XXXXX" 
+              required={formData.role !== 'adhakshya'} 
+            />
+            
+            <div className="grid grid-cols-2 gap-3">
+                <FormFileInput
+                    label="Citizenship (Front)"
+                    name="citizenship_front"
+                    accept=".jpg,.jpeg,.png"
+                    onChange={handleChange}
+                    error={errors.citizenship_front}
+                    required={formData.role !== 'adhakshya'}
+                    helperText={formData.role === 'adhakshya' ? "Optional: We have your photo from registration." : ""}
+                />
+                <FormFileInput
+                    label="Citizenship (Back)"
+                    name="citizenship_back"
+                    accept=".jpg,.jpeg,.png"
+                    onChange={handleChange}
+                    error={errors.citizenship_back}
+                    required={formData.role !== 'adhakshya'}
+                    helperText={formData.role === 'adhakshya' ? "Optional: We have your photo from registration." : ""}
+                />
+            </div>
+            
+            {formData.role === 'adhakshya' && (
+              <p className="text-[10px] text-gray-400 mt-1 italic">
+                * Since you are the founding Adhakshya, we will automatically use the citizenship photos you provided during Samuha registration.
+              </p>
+            )}
+         </div>
+         <FormInput label="Samuha Code" name="samuha_code" value={formData.samuha_code} onChange={handleChange} error={errors.samuha_code} placeholder="e.g. SAMUHA-123" required />
         <div className="grid grid-cols-2 gap-3">
             <FormInput label="Password" name="password" type="password" value={formData.password} onChange={handleChange} error={errors.password} placeholder="Min 8 chars" required />
             <FormInput label="Confirm" name="confirm_password" type="password" value={formData.confirm_password} onChange={handleChange} error={errors.confirm_password} placeholder="Confirm" required />

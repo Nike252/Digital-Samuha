@@ -85,6 +85,48 @@ const ReviewModal = ({
                   </div>
                 </div>
               </div>
+
+              <div>
+                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Identity Verification</h4>
+                <div className="space-y-4 bg-indigo-500/5 p-4 rounded-xl border border-indigo-500/10">
+                  <div>
+                    <p className="text-xs text-indigo-400 mb-1">Citizenship Number</p>
+                    <p className="font-mono text-sm font-bold tracking-wider">{selectedSamuha.adhakshya_citizenship_no || 'N/A'}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-gray-500 font-bold uppercase text-center">ID FRONT</p>
+                      <div className="aspect-[3/2] rounded-lg overflow-hidden border border-gray-800 bg-black/40 cursor-zoom-in hover:border-indigo-500/50 transition-colors">
+                        {selectedSamuha.adhakshya_citizenship_front ? (
+                          <img 
+                            src={`http://127.0.0.1:8000${selectedSamuha.adhakshya_citizenship_front}`} 
+                            alt="ID Front" 
+                            className="w-full h-full object-cover"
+                            onClick={() => window.open(`http://127.0.0.1:8000${selectedSamuha.adhakshya_citizenship_front}`)}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-700 uppercase">No File</div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-gray-500 font-bold uppercase text-center">ID BACK</p>
+                      <div className="aspect-[3/2] rounded-lg overflow-hidden border border-gray-800 bg-black/40 cursor-zoom-in hover:border-indigo-500/50 transition-colors">
+                        {selectedSamuha.adhakshya_citizenship_back ? (
+                          <img 
+                            src={`http://127.0.0.1:8000${selectedSamuha.adhakshya_citizenship_back}`} 
+                            alt="ID Back" 
+                            className="w-full h-full object-cover"
+                            onClick={() => window.open(`http://127.0.0.1:8000${selectedSamuha.adhakshya_citizenship_back}`)}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-700 uppercase">No File</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
