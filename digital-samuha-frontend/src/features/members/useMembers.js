@@ -61,6 +61,34 @@ const useMembers = (user) => {
     }
   };
 
+  const handleUpdateRole = async (membershipId, role) => {
+    try {
+      await samuhaAPI.updateMemberRole(membershipId, role);
+      fetchMembers();
+      showToast(`Role updated to ${role}`, 'success');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const handleTransferLeadership = async (successorId, email = null, citizenshipNo = null) => {
+    try {
+      setLoading(true);
+      await samuhaAPI.transferLeadership(successorId, email, citizenshipNo);
+      showToast('Leadership transferred! Redirecting...', 'success');
+      
+      // Crucial: UI Change logic
+      // We force a redirect to dashboard and reload to ensure roles are re-fetched from backend
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1500);
+      
+    } catch (err) {
+      setLoading(false);
+      showToast(err.message, 'error');
+    }
+  };
+
   const filteredMembers = members.filter(m => {
     // 1. Filter by Tab
     if (activeTab === 'active' && m.status !== 'active') return false;
@@ -79,6 +107,7 @@ const useMembers = (user) => {
   return {
     members, exitRequests, loading, activeTab, setActiveTab, isAdmin,
     fetchMembers, fetchExitRequests, handleUpdateStatus, handleProcessExit, 
+    handleUpdateRole, handleTransferLeadership,
     filteredMembers, searchQuery, setSearchQuery
   };
 };

@@ -1,4 +1,4 @@
-import { Phone, Mail, UserCheck, UserMinus, X, ShieldCheck } from 'lucide-react';
+import { Phone, Mail, UserCheck, UserMinus, X, ShieldCheck, ArrowUp, ArrowDown, Crown } from 'lucide-react';
 
 const STATUS_COLORS = {
   active: 'bg-emerald-100 text-emerald-700',
@@ -8,7 +8,7 @@ const STATUS_COLORS = {
   exited: 'bg-rose-100 text-rose-700',
 };
 
-const MemberRow = ({ m, isAdmin, handleUpdateStatus, onVerify }) => {
+const MemberRow = ({ m, isAdmin, currentUserRole, currentUserId, handleUpdateStatus, handleUpdateRole, onTransferLeadership, onVerify }) => {
   const isExited = m.status === 'exited';
 
   return (
@@ -65,6 +65,44 @@ const MemberRow = ({ m, isAdmin, handleUpdateStatus, onVerify }) => {
                   <button onClick={() => handleUpdateStatus(m.membership_id, 'active')} className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors" title="Reactivate">
                     <UserCheck size={18} />
                   </button>
+                )}
+
+                {/* ROLE MANAGEMENT - Only Adhakshya can promote/demote/transfer */}
+                {currentUserRole === 'adhakshya' && m.status === 'active' && m.id !== currentUserId && (
+                  <>
+                    <div className="w-px h-6 bg-gray-100 mx-1" />
+                    
+                    {/* Promote to Co-Adhakshya */}
+                    {m.role === 'member' && (
+                      <button 
+                        onClick={() => handleUpdateRole(m.membership_id, 'co_adhakshya')} 
+                        className="p-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors" 
+                        title="Promote to Co-Adhakshya"
+                      >
+                        <ArrowUp size={18} />
+                      </button>
+                    )}
+
+                    {/* Demote to Member */}
+                    {m.role === 'co_adhakshya' && (
+                      <button 
+                        onClick={() => handleUpdateRole(m.membership_id, 'member')} 
+                        className="p-2 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors" 
+                        title="Demote to Member"
+                      >
+                        <ArrowDown size={18} />
+                      </button>
+                    )}
+
+                    {/* Transfer Presidency */}
+                    <button 
+                      onClick={() => onTransferLeadership(m)} 
+                      className="p-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors" 
+                      title="Transfer Presidency"
+                    >
+                      <Crown size={18} />
+                    </button>
+                  </>
                 )}
               </>
             )}

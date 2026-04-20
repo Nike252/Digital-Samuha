@@ -5,13 +5,15 @@ import useMembers from './useMembers';
 import MemberRow from './MemberRow';
 import ExitRequestsList from './ExitRequestsList';
 import SettlementReviewModal from './SettlementReviewModal';
+import TransferLeadershipModal from './TransferLeadershipModal';
 import { toast } from 'react-hot-toast';
 
 const Members = ({ user, onLogout }) => {
   const {
     loading, activeTab, setActiveTab, isAdmin,
     handleUpdateStatus, filteredMembers, 
-    searchQuery, setSearchQuery, exitRequests, handleProcessExit
+    searchQuery, setSearchQuery, exitRequests, handleProcessExit,
+    handleUpdateRole, handleTransferLeadership
   } = useMembers(user);
 
   const [selectedMember, setSelectedMember] = React.useState(null);
@@ -21,6 +23,11 @@ const Members = ({ user, onLogout }) => {
   const [selectedExitRequest, setSelectedExitRequest] = React.useState(null);
   const [showSettlementModal, setShowSettlementModal] = React.useState(false);
   const [isProcessingExit, setIsProcessingExit] = React.useState(false);
+
+  // Leadership States
+  const [successorCandidate, setSuccessorCandidate] = React.useState(null);
+  const [showTransferModal, setShowTransferModal] = React.useState(false);
+  const [isProcessingTransfer, setIsProcessingTransfer] = React.useState(false);
 
   const handleOpenVerify = (member) => {
     setSelectedMember(member);
@@ -150,7 +157,14 @@ const Members = ({ user, onLogout }) => {
                     key={m.membership_id} 
                     m={m} 
                     isAdmin={isAdmin} 
+                    currentUserRole={user?.role}
+                    currentUserId={user?.id}
                     handleUpdateStatus={handleUpdateStatus}
+                    handleUpdateRole={handleUpdateRole}
+                    onTransferLeadership={(member) => {
+                      setSuccessorCandidate(member);
+                      setShowTransferModal(true);
+                    }}
                     onVerify={handleOpenVerify} 
                   />
                 ))}
@@ -280,6 +294,20 @@ const Members = ({ user, onLogout }) => {
           </div>
         </div>
       )}
+
+      {/* Leadership Transfer Modal */}
+      <TransferLeadershipModal 
+        isOpen={showTransferModal}
+        onClose={() => setShowTransferModal(false)}
+        successor={successorCandidate}
+        isProcessing={isProcessingTransfer}
+        onConfirm={async (successorId, email, citizenshipNo) => {
+          setIsProcessingTransfer(true);
+          await handleTransferLeadership(successorId, email, citizenshipNo);
+          // Redirect happens in useMembers on success
+          setIsProcessingTransfer(false);
+        }}
+      />
     </MainLayout>
   );
 };

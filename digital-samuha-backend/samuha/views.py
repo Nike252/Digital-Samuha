@@ -1,3 +1,4 @@
+from django.db import transaction, models
 from rest_framework import permissions, status, viewsets
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
@@ -248,6 +249,157 @@ class UpdateMemberStatusView(APIView):
             
         except Membership.DoesNotExist:
             return Response({"detail": "Membership not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class UpdateMemberRoleView(APIView):
+    """
+    Update a member's role (Promote/Demote).
+    Only the Adhakshya can promote to Co-Adhakshya or demote to Member.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, pk):
+        try:
+            target_membership = Membership.objects.get(pk=pk)
+            samuha = target_membership.samuha
+            
+            # 1. Permission Check: Only the active Adhakshya can manage roles
+            requester_membership = Membership.objects.filter(
+                user=request.user, 
+                samuha=samuha,
+                role=Membership.ROLE_ADHAKSHYA,
+                status=Membership.STATUS_ACTIVE
+            ).first()
+            
+            if not requester_membership:
+                return Response({"detail": "Only the Adhakshya can manage member roles."}, status=status.HTTP_403_FORBIDDEN)
+            
+            # 2. Protection: Adhakshya cannot demote themselves here (must use TransferLeadership)
+            if target_membership.user.id == request.user.id:
+                 return Response({"detail": "You cannot demote yourself. Use the 'Transfer Leadership' feature to step down safely."}, status=status.HTTP_400_BAD_REQUEST)
+
+            new_role = request.data.get('role')
+            if new_role not in [Membership.ROLE_CO_ADHAKSHYA, Membership.ROLE_MEMBER]:
+                return Response({"detail": "Invalid role specified."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 3. Rule Check: Only ONE Co-Adhakshya allowed
+            if new_role == Membership.ROLE_CO_ADHAKSHYA:
+                exists = Membership.objects.filter(
+                    samuha=samuha, 
+                    role=Membership.ROLE_CO_ADHAKSHYA,
+                    status=Membership.STATUS_ACTIVE
+                ).exclude(id=target_membership.id).exists()
+                
+                if exists:
+                    return Response({"detail": "There can not be 2 co adhakshya in a samuha"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 4. Perform Update
+            old_role = target_membership.role
+            target_membership.role = new_role
+            target_membership.save()
+            
+            # 5. Notify
+            notify_user(
+                user=target_membership.user,
+                title="Leadership Update",
+                message=f"Your role in {samuha.samuha_name} has been updated from {old_role} to {new_role}.",
+                type='other'
+            )
+            
+            return Response({
+                "detail": f"Role updated to {new_role}.",
+                "role": new_role
+            })
+
+        except Membership.DoesNotExist:
+            return Response({"detail": "Membership not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class TransferLeadershipView(APIView):
+    """
+    Swap the Adhakshya role with another member.
+    The current Adhakshya becomes a regular member (or switches roles with successor),
+    and the successor becomes the new Adhakshya.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        try:
+            successor_id = request.data.get('successor_id') # This is the Membership PK
+            if not successor_id:
+                return Response({"detail": "Successor selection is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 1. Identify roles
+            current_adh_mem = Membership.objects.filter(
+                user=request.user, 
+                role=Membership.ROLE_ADHAKSHYA,
+                status=Membership.STATUS_ACTIVE
+            ).first()
+            
+            if not current_adh_mem:
+                return Response({"detail": "Only the current Adhakshya can initiate a leadership transfer."}, status=status.HTTP_403_FORBIDDEN)
+
+            successor_mem = Membership.objects.get(pk=successor_id, samuha=current_adh_mem.samuha)
+            
+            if successor_mem.status != Membership.STATUS_ACTIVE:
+                return Response({"detail": "The successor must be an active member."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if successor_mem.id == current_adh_mem.id:
+                return Response({"detail": "You are already the Adhakshya."}, status=status.HTTP_400_BAD_REQUEST)
+
+            samuha = current_adh_mem.samuha
+            successor_old_role = successor_mem.role
+
+            # 2. Transactional Swap
+            with transaction.atomic():
+                # A. Update successor details if provided (mandatory if missing)
+                new_email = request.data.get('email')
+                new_cit_no = request.data.get('citizenship_no')
+                
+                if new_email:
+                    successor_mem.user.email = new_email
+                    successor_mem.user.save()
+                
+                if new_cit_no:
+                    successor_mem.citizenship_no = new_cit_no
+                    successor_mem.save()
+
+                # B. Demote current leader
+                # If swapping with Co-Adhakshya, current leader becomes Co-Adhakshya
+                # If swapping with Member, current leader becomes Member
+                current_adh_mem.role = successor_old_role
+                current_adh_mem.save()
+
+                # C. Promote successor
+                successor_mem.role = Membership.ROLE_ADHAKSHYA
+                successor_mem.save()
+
+                # D. Sync Official Samuha Profile
+                new_adhakshya_user = successor_mem.user
+                samuha.adhakshya_full_name = new_adhakshya_user.full_name
+                samuha.adhakshya_phone = new_adhakshya_user.phone
+                samuha.adhakshya_email = new_adhakshya_user.email or ""
+                samuha.adhakshya_citizenship_no = successor_mem.citizenship_no or ""
+                samuha.save()
+
+            # 3. Mass Notify
+            all_members = Membership.objects.filter(samuha=samuha, status=Membership.STATUS_ACTIVE)
+            for m in all_members:
+                notify_user(
+                    m.user,
+                    "Leadership Change 👑",
+                    f"{new_adhakshya_user.full_name} is now the official Adhakshya of {samuha.samuha_name}."
+                )
+
+            return Response({
+                "detail": f"Leadership successfully transferred to {new_adhakshya_user.full_name}.",
+                "new_role": current_adh_mem.role
+            })
+
+        except Membership.DoesNotExist:
+            return Response({"detail": "Successor membership not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class SamuhaSettingsView(APIView):
@@ -531,13 +683,13 @@ class ExitRequestViewSet(viewsets.ModelViewSet):
             instance.processed_by = request.user
             instance.save()
             
-            notify_user(instance.user, "Exit Request Approved ✅", f"Your request to leave {instance.samuha.samuha_name} has been approved. Payout of NPR {amount} recorded. Your account has been deactivated.")
+            notify_user(instance.user, "Exit Request Approved", f"Your request to leave {instance.samuha.samuha_name} has been approved. Payout of NPR {amount} recorded. Your account has been deactivated.")
             return Response(ExitRequestSerializer(instance).data)
             
         elif new_status == ExitRequest.STATUS_REJECTED:
             instance.status = ExitRequest.STATUS_REJECTED
             instance.save()
-            notify_user(instance.user, "Exit Request Rejected ❌", f"Your request to leave {instance.samuha.samuha_name} was rejected by the admin.")
+            notify_user(instance.user, "Exit Request Rejected", f"Your request to leave {instance.samuha.samuha_name} was rejected by the admin.")
             return Response(ExitRequestSerializer(instance).data)
 
         return super().partial_update(request, *args, **kwargs)

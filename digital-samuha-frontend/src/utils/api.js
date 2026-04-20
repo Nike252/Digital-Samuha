@@ -251,6 +251,22 @@ export const samuhaAPI = {
       method: 'PATCH',
       body: JSON.stringify({ status })
     })
+  },
+  updateMemberRole: async (membershipId, role) => {
+    return apiRequest(`/samuha/members/${membershipId}/role/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role })
+    })
+  },
+  transferLeadership: async (successorId, email = null, citizenshipNo = null) => {
+    return apiRequest('/samuha/leadership-transfer/', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        successor_id: successorId,
+        email,
+        citizenship_no: citizenshipNo 
+      })
+    })
   }
 }
 
