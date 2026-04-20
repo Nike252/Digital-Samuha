@@ -78,15 +78,14 @@ class TransactionViewSet(LedgerBaseViewSet):
         protected_types = [
             Transaction.TYPE_LOAN_DISBURSEMENT,
             Transaction.TYPE_LOAN_REPAYMENT,
-            # Transaction.TYPE_SAVING  # Optional: Protect savings too? 
-            # For now, let's just fix the reported loan bug.
+            Transaction.TYPE_LIQUIDATION,
+            Transaction.TYPE_DISTRIBUTION,
         ]
         
         if instance.type in protected_types:
             raise ValidationError({
-                "detail": f"This '{instance.get_type_display()}' transaction is protected and cannot be deleted. "
-                          "Loan-related records must be voided or adjusted through the Loan Manager "
-                          "to maintain financial integrity."
+                "detail": f"The '{instance.get_type_display()}' transaction is a protected system record and cannot be deleted. "
+                          "Loan and Cycle-related transactions must be preserved to maintain financial integrity."
             })
             
         return super().destroy(request, *args, **kwargs)
@@ -109,20 +108,73 @@ class TransactionViewSet(LedgerBaseViewSet):
         samuha, _ = self.get_samuha()
         total_fund = services.get_samuha_financial_summary(samuha)
         
-        # Personal Stats
-        my_savings = Transaction.objects.filter(
+        # Personal Stats (Net savings for current cycle)
+        my_savings_in = Transaction.objects.filter(
             samuha=samuha, user=request.user, type=Transaction.TYPE_SAVING
-        ).aggregate(sum=Sum('amount'))['sum'] or 0
+        ).aggregate(sum=Sum('amount'))['sum'] or Decimal('0.00')
+
+        my_savings_out = Transaction.objects.filter(
+            samuha=samuha, user=request.user, type=Transaction.TYPE_LIQUIDATION
+        ).aggregate(sum=Sum('amount'))['sum'] or Decimal('0.00')
         
-        # Active Loans Stats
+        my_savings = max(Decimal('0.00'), my_savings_in - my_savings_out)
+        
+        # New: Estimated Payout (Savings + Profit Share)
+        payout_data = services.get_member_payout_data(request.user, samuha)
+        
+        # Active Loans Stats (Personal)
+        my_active_loan = Loan.objects.filter(samuha=samuha, user=request.user, status=Loan.STATUS_ACTIVE).first()
+        my_loan_balance = my_active_loan.remaining_principal if my_active_loan else 0
+        
+        # Active Loans Stats (Samuha-wide)
         active_loans = Loan.objects.filter(samuha=samuha, status=Loan.STATUS_ACTIVE)
         loans_total = active_loans.aggregate(sum=Sum('remaining_principal'))['sum'] or 0
-        
+
+        # Cycle Reset Info (For making it "Less Laggy" / "Clean Start")
+        last_distribution = Transaction.objects.filter(
+            samuha=samuha, type=Transaction.TYPE_DISTRIBUTION
+        ).order_by('-date').first()
+        last_reset_date = last_distribution.date if last_distribution else None
+
         return Response({
             "total_fund": total_fund,
             "my_savings": my_savings,
+            "my_loan_balance": my_loan_balance,
             "active_loans_total": loans_total,
-            "total_members": Membership.objects.filter(samuha=samuha, status=Membership.STATUS_ACTIVE).count()
+            "est_payout": payout_data['total_payout'],
+            "payout_breakdown": payout_data,
+            "total_members": Membership.objects.filter(samuha=samuha, status=Membership.STATUS_ACTIVE).count(),
+            "last_reset_date": last_reset_date
+        })
+
+    @action(detail=False, methods=['get'], url_path='payout-report')
+    def payout_report(self, request):
+        samuha, role = self.get_samuha()
+        if role != Membership.ROLE_ADHAKSHYA:
+            raise PermissionDenied("Only the Adhakshya can view the payout report.")
+        
+        report = services.get_samuha_distribution_preview(samuha)
+        return Response(report)
+
+    @action(detail=False, methods=['post'], url_path='distribute-funds')
+    def distribute_funds(self, request):
+        samuha, role = self.get_samuha()
+        if role != Membership.ROLE_ADHAKSHYA:
+            raise PermissionDenied("Only the Adhakshya can trigger profit distribution.")
+        
+        count = services.execute_samuha_distribution(samuha, request.user, is_dissolve=False)
+        return Response({"detail": f"Successfully distributed profits to {count} members."})
+
+    @action(detail=False, methods=['post'], url_path='dissolve-samuha')
+    def dissolve_samuha(self, request):
+        samuha, role = self.get_samuha()
+        if role != Membership.ROLE_ADHAKSHYA:
+            raise PermissionDenied("Only the Adhakshya can dissolve the Samuha.")
+        
+        count = services.execute_samuha_distribution(samuha, request.user, is_dissolve=True)
+        return Response({
+            "detail": f"Samuha '{samuha.samuha_name}' has been dissolved. {count} memberships deactivated.",
+            "status": samuha.status
         })
 
 class LoanViewSet(LedgerBaseViewSet):
@@ -265,12 +317,20 @@ class LoanViewSet(LedgerBaseViewSet):
             # 6 savings in 6 months = 1.0 consistency
             savings_consistency = min(1.0, savings_count / 6.0)
             
-            # C. Collateral Ratio (Total Savings / Requested Loan)
-            total_savings = Transaction.objects.filter(
+            # C. Collateral Ratio (Net Total Savings / Requested Loan)
+            total_savings_in = Transaction.objects.filter(
                 user=applicant,
                 samuha=samuha,
                 type=Transaction.TYPE_SAVING
             ).aggregate(sum=Sum('amount'))['sum'] or Decimal('0.00')
+
+            total_savings_out = Transaction.objects.filter(
+                user=applicant,
+                samuha=samuha,
+                type=Transaction.TYPE_LIQUIDATION
+            ).aggregate(sum=Sum('amount'))['sum'] or Decimal('0.00')
+
+            total_savings = max(Decimal('0.00'), total_savings_in - total_savings_out)
             
             collateral_ratio = float(total_savings / loan.principal_amount) if loan.principal_amount > 0 else 0.0
 

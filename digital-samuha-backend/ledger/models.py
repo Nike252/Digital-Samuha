@@ -9,6 +9,8 @@ class Transaction(models.Model):
     TYPE_INTEREST = 'interest'
     TYPE_FINE = 'fine'
     TYPE_EXPENSE = 'expense'
+    TYPE_DISTRIBUTION = 'distribution'
+    TYPE_LIQUIDATION = 'liquidation'
 
     TYPE_CHOICES = [
         (TYPE_SAVING, 'Monthly Saving'),
@@ -17,16 +19,18 @@ class Transaction(models.Model):
         (TYPE_INTEREST, 'Interest Payment'),
         (TYPE_FINE, 'Fine Payment'),
         (TYPE_EXPENSE, 'Samuha Expense'),
+        (TYPE_DISTRIBUTION, 'Profit Distribution'),
+        (TYPE_LIQUIDATION, 'Final Liquidation'),
     ]
 
     samuha = models.ForeignKey(Samuha, on_delete=models.CASCADE, related_name='transactions')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions')
     meeting = models.ForeignKey('attendance.Meeting', on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions')
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, db_index=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     description = models.CharField(max_length=255, blank=True, null=True)
     external_id = models.CharField(max_length=100, unique=True, null=True, blank=True, help_text="Unique Gateway Transaction ID (e.g. eSewa/Khalti code)")
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(auto_now_add=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

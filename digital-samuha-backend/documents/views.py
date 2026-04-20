@@ -30,6 +30,19 @@ class DocumentViewSet(viewsets.ModelViewSet):
         if membership:
             serializer.save(samuha=membership.samuha, uploaded_by=user)
 
+    @action(detail=False, methods=['get'], url_path='latest-payout')
+    def latest_payout(self, request):
+        user = request.user
+        membership = Membership.objects.filter(user=user, status=Membership.STATUS_ACTIVE).first()
+        if not membership:
+            return Response({"detail": "Active membership required."}, status=403)
+        
+        doc = Document.objects.filter(samuha=membership.samuha, category='payout').order_by('-created_at').first()
+        if not doc:
+            return Response({"detail": "No distribution reports found."}, status=404)
+            
+        return Response(DocumentSerializer(doc).data)
+
     def destroy(self, request, *args, **kwargs):
         user = request.user
         membership = Membership.objects.filter(user=user, status=Membership.STATUS_ACTIVE).first()
@@ -148,18 +161,23 @@ class WardNiwedanView(APIView):
                 "detail": "Citizenship Number is missing in your Samuha profile. Please update it before generating official documents."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # UT-19: Generate PDF (Mock)
-        from django.http import HttpResponse
+        from reportlab.lib.pagesizes import letter
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet
         import io
         
-        # Create a mock PDF blob
         buffer = io.BytesIO()
-        buffer.write(b"%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n")
-        buffer.write(b"2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n")
-        buffer.write(b"3 0 obj << /Type /Page /Parent 2 0 R /Contents 4 0 R /MediaBox [0 0 612 792] >> endobj\n")
-        buffer.write(b"4 0 obj << /Length 52 >> stream\nBT /F1 12 Tf 100 700 Td (Ward Niwedan - Digital Samuha) Tj ET\nendstream\nendobj\n")
-        buffer.write(b"xref\n0 5\n0000000000 65535 f\n0000000010 00000 n\n0000000069 00000 n\n0000000128 00000 n\n0000000227 00000 n\ntrailer << /Size 5 /Root 1 0 R >>\nstartxref\n330\n%%EOF")
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        styles = getSampleStyleSheet()
+        elements = []
+
+        elements.append(Paragraph("Ward Niwedan - Digital Samuha", styles['Title']))
+        elements.append(Spacer(1, 12))
+        elements.append(Paragraph(f"Official request from {samuha.samuha_name}", styles['Normal']))
+        elements.append(Paragraph(f"Adhakshya: {samuha.adhakshya_full_name}", styles['Normal']))
+        elements.append(Paragraph(f"Citizenship No: {samuha.adhakshya_citizenship_no}", styles['Normal']))
         
+        doc.build(elements)
         pdf_content = buffer.getvalue()
         buffer.close()
         

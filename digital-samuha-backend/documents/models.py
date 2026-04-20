@@ -6,12 +6,14 @@ class Document(models.Model):
     CATEGORY_LEGAL = 'legal'
     CATEGORY_FINANCIAL = 'financial'
     CATEGORY_MEETING_MINUTE = 'meeting_minute'
+    CATEGORY_PAYOUT = 'payout'
     CATEGORY_OTHER = 'other'
 
     CATEGORY_CHOICES = [
         (CATEGORY_LEGAL, 'Legal/Registration'),
         (CATEGORY_FINANCIAL, 'Financial Report'),
         (CATEGORY_MEETING_MINUTE, 'Meeting Minute'),
+        (CATEGORY_PAYOUT, 'Official Payout Record'),
         (CATEGORY_OTHER, 'Other Official Document'),
     ]
 
