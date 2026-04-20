@@ -62,7 +62,7 @@ const Settings = ({ user: initialUser, onLogout, onNavigate, currentPath }) => {
           <SettingsSidebar {...{ activeTab, setActiveTab, isAdhakshya, isDark }} />
           <main className="flex-1 min-w-0">
             {activeTab === 'profile' && <ProfileTab {...{ profileData, handleProfileChange, handleProfileUpdate, loading, isDark }} />}
-            {activeTab === 'rules' && <RulesTab {...{ samuhaSettings, handleSettingsChange, handleSettingsUpdate, setSamuhaSettings, settingsLoading, loading }} />}
+            {activeTab === 'rules' && <RulesTab {...{ samuhaSettings, handleSettingsChange, handleSettingsUpdate, setSamuhaSettings, settingsLoading, loading, isAdhakshya, navigate, showToast, onLogout }} />}
             {activeTab === 'premium' && <PremiumTab {...{ isPremium, subscription, loading, user, navigate, showTransactionHistory, setShowTransactionHistory, handleEsewaUpgrade }} />}
             {activeTab === 'security' && <SecurityTab {...{ user, passwordData, handlePasswordChange, handlePasswordUpdate, loading, isDark }} />}
           </main>

@@ -1,7 +1,11 @@
-import React from 'react';
-import { Clock, Percent } from 'lucide-react';
+import React, { useState } from 'react';
+import { Clock, Percent, ShieldAlert, Sparkles, LogOut, FileCheck } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import FormInput from '../../components/ui/FormInput';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import PayoutReportModal from './PayoutReportModal';
+import DissolutionSuccess from './DissolutionSuccess';
+import { ledgerAPI } from '../../utils/api';
 
 const RulesTab = ({ 
   samuhaSettings, 
@@ -9,10 +13,60 @@ const RulesTab = ({
   handleSettingsUpdate, 
   setSamuhaSettings, 
   settingsLoading, 
-  loading 
+  loading,
+  isAdhakshya,
+  navigate,
+  showToast,
+  onLogout
 }) => {
+  const [dialog, setDialog] = useState({ isOpen: false, type: 'info', title: '', message: '', onConfirm: null });
+  const [reportModal, setReportModal] = useState({ isOpen: false, data: null, type: 'distribute' });
+  const [isLegalChecked, setIsLegalChecked] = useState(false);
+  const [dissolved, setDissolved] = useState(false);
+  const [dissolveConfirm, setDissolveConfirm] = useState('');
+
+  const closeDialog = () => setDialog(prev => ({ ...prev, isOpen: false }));
+
+  const fetchPayoutReport = async (type) => {
+    try {
+      const res = await ledgerAPI.payoutReport();
+      setReportModal({ isOpen: true, data: res.data, type });
+    } catch (err) {
+      showToast(err.message || "Failed to fetch payout report. Ensure no loans are active.", "error");
+    }
+  };
+
+  const onConfirmDistribution = async () => {
+    setReportModal(prev => ({ ...prev, isOpen: false }));
+    try {
+      const res = await ledgerAPI.distributeFunds();
+      showToast(res.data.detail || "Profits shared and Archived successfully! 📄", "success");
+      setTimeout(() => window.location.reload(), 2000);
+    } catch (err) {
+      showToast(err.message || "Distribution failed.", "error");
+    }
+  };
+
+  const onConfirmDissolution = async () => {
+    if (!isLegalChecked) {
+       showToast("You must agree to the legal disclaimer before dissolving.", "warning");
+       return;
+    }
+    setReportModal(prev => ({ ...prev, isOpen: false }));
+    try {
+      const res = await ledgerAPI.dissolveSamuha();
+      showToast("Samuha officially dissolved. All records archived. 🏛️", "success");
+      setDissolved(true);
+    } catch (err) {
+      showToast(err.message || "Dissolution failed. Repay all loans first.", "error");
+    }
+  };
+
+  if (dissolved) return <DissolutionSuccess onLogout={onLogout} />;
+
   return (
     <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-right-4 duration-500">
+      {/* ... keeping previous UI sections ... */}
       <div className="p-8 border-b border-gray-50 bg-gradient-to-r from-purple-50/50 to-transparent">
         <h3 className="text-xl font-bold text-gray-900">Samuha Governance</h3>
         <p className="text-sm text-gray-500 mt-1">Define the fundamental rules and financial policies for your organization.</p>
@@ -216,7 +270,7 @@ const RulesTab = ({
                     </div>
                     <div>
                        <p className="text-sm font-bold text-gray-900">Standard Monthly Saving</p>
-                       <p className="text-xs text-gray-500">The fixed amount every member must contribute monthy</p>
+                       <p className="text-xs text-gray-500">The fixed amount every member must contribute monthly</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -240,6 +294,122 @@ const RulesTab = ({
           </div>
         </form>
       )}
+
+      {isAdhakshya && !settingsLoading && (
+        <div className="p-8 border-t border-gray-100 bg-gray-50/50 space-y-8">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-indigo-100 rounded-2xl">
+              <Sparkles className="text-indigo-600" size={24} />
+            </div>
+            <div>
+              <h4 className="text-lg font-bold text-gray-900">Lifecycle Management</h4>
+              <p className="text-sm text-gray-500">Execute organization-wide financial distributions and closure protocols.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Distribute Fund Card */}
+            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
+              <div className="relative z-10">
+                <h5 className="text-xl font-bold text-gray-900 mb-2">Annual Profit Share</h5>
+                <p className="text-sm text-gray-500 leading-relaxed mb-8">
+                  Redistribute all collected interests and fines equally among active members. 
+                  The Samuha continues operations normally. Recommended at the end of each fiscal year.
+                </p>
+                <Button 
+                  type="button" 
+                  variant="primary" 
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100 py-3 rounded-2xl"
+                  onClick={() => fetchPayoutReport('distribute')}
+                >
+                  View Payout Report
+                </Button>
+              </div>
+              <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Sparkles size={120} />
+              </div>
+            </div>
+
+            {/* Dissolve Card */}
+            <div className="bg-white p-8 rounded-3xl border border-rose-100 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
+               <div className="relative z-10">
+                <h5 className="text-xl font-bold text-rose-600 mb-2">Strategic Dissolution</h5>
+                <p className="text-sm text-gray-500 leading-relaxed mb-6">
+                  Liquidate all assets, return all base savings, and payout final dividends. 
+                  This will PERMANENTLY deactivate the Samuha. Use with extreme caution.
+                </p>
+                
+                <div className="mb-6 space-y-4">
+                   <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl space-y-3">
+                      <div className="flex items-start gap-2">
+                         <input 
+                          type="checkbox" 
+                          id="legal-disclaim"
+                          checked={isLegalChecked}
+                          onChange={(e) => setIsLegalChecked(e.target.checked)}
+                          className="mt-1 w-4 h-4 rounded border-rose-200 text-rose-600 focus:ring-rose-500" 
+                         />
+                         <label htmlFor="legal-disclaim" className="text-[10px] text-rose-800 font-bold leading-relaxed uppercase tracking-tight">
+                            I confirm that all members have received their funds. Digital Samuha is not responsible for any legal discrepancies or future disputes.
+                         </label>
+                      </div>
+                   </div>
+
+                   <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Type DISSOLVE to enable</label>
+                      <input 
+                        type="text"
+                        placeholder="Type DISSOLVE"
+                        value={dissolveConfirm}
+                        onChange={(e) => setDissolveConfirm(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-rose-500/20 outline-none text-rose-600 font-black tracking-widest placeholder:text-gray-300 placeholder:font-bold placeholder:tracking-normal"
+                      />
+                   </div>
+                </div>
+
+                <Button 
+                  type="button" 
+                  variant="danger" 
+                  disabled={dissolveConfirm !== 'DISSOLVE' || !isLegalChecked}
+                  className="w-full shadow-lg shadow-rose-100 py-3 rounded-2xl"
+                  onClick={() => fetchPayoutReport('dissolve')}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <LogOut size={18} />
+                    <span>Confirm Final Dissolution</span>
+                  </div>
+                </Button>
+              </div>
+              <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <ShieldAlert size={120} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Dialog */}
+      {dialog.isOpen && (
+        <ConfirmDialog
+          title={dialog.title}
+          message={dialog.message}
+          type={dialog.type}
+          confirmText={dialog.confirmText}
+          onConfirm={dialog.onConfirm}
+          onCancel={closeDialog}
+        />
+      )}
+
+      {/* Payout Report Modal */}
+      <PayoutReportModal
+        isOpen={reportModal.isOpen}
+        onClose={() => setReportModal(prev => ({ ...prev, isOpen: false }))}
+        data={reportModal.data}
+        title={reportModal.type === 'dissolve' ? 'Strategic Dissolution Report' : 'Annual Distribution Report'}
+        subtitle={reportModal.type === 'dissolve' ? 'Final liquidation preview for all members.' : 'Annual profit share preview for all members.'}
+        confirmText={reportModal.type === 'dissolve' ? 'Finalize Dissolution' : 'Execute Distribution'}
+        onConfirm={reportModal.type === 'dissolve' ? onConfirmDissolution : onConfirmDistribution}
+      />
     </div>
   );
 };

@@ -16,7 +16,7 @@ export const ROLE_CONFIG = {
             { label: 'Total Savings', value: 'Loading...', color: 'bg-green-100 text-green-600', icon: Wallet },
             { label: 'Active Loan', value: 'Loading...', color: 'bg-blue-100 text-blue-600', icon: CreditCard },
             { label: 'Next Meeting', value: 'Loading...', color: 'bg-purple-100 text-purple-600', icon: Calendar },
-            { label: 'Total Members', value: '...', color: 'bg-indigo-100 text-indigo-600', icon: Users }
+            { label: 'Total Payout', value: '...', color: 'bg-indigo-100 text-indigo-600', icon: Wallet }
         ],
         quickActions: [
             { label: 'Add Saving', action: 'add_saving', icon: 'Plus' },
@@ -39,7 +39,7 @@ export const ROLE_CONFIG = {
             { label: 'Total Savings', value: 'Loading...', color: 'bg-green-100 text-green-600', icon: Wallet },
             { label: 'Active Loan', value: 'Loading...', color: 'bg-blue-100 text-blue-600', icon: CreditCard },
             { label: 'Next Meeting', value: 'Loading...', color: 'bg-purple-100 text-purple-600', icon: Calendar },
-            { label: 'Total Members', value: '...', color: 'bg-indigo-100 text-indigo-600', icon: Users }
+            { label: 'Total Payout', value: '...', color: 'bg-indigo-100 text-indigo-600', icon: Wallet }
         ],
         quickActions: [
             { label: 'Record Meeting', action: 'record_meeting', icon: 'Mic' },
@@ -60,7 +60,7 @@ export const ROLE_CONFIG = {
             { label: 'Total Savings', value: 'Loading...', color: 'bg-green-100 text-green-600', icon: Wallet },
             { label: 'Active Loan', value: 'Loading...', color: 'bg-blue-100 text-blue-600', icon: CreditCard },
             { label: 'Next Meeting', value: 'Loading...', color: 'bg-purple-100 text-purple-600', icon: Calendar },
-            { label: 'Total Members', value: '...', color: 'bg-indigo-100 text-indigo-600', icon: Users }
+            { label: 'Total Payout', value: '...', color: 'bg-indigo-100 text-indigo-600', icon: Wallet }
         ],
         quickActions: [
             { label: 'Ask AI Bot', action: 'chat_ai', icon: 'MessageSquare' },

@@ -430,6 +430,15 @@ export const ledgerAPI = {
       method: 'POST',
       body: JSON.stringify(paymentData)
     })
+  },
+  distributeFunds: async () => {
+    return apiRequest('/ledger/transactions/distribute-funds/', { method: 'POST' })
+  },
+  dissolveSamuha: async () => {
+    return apiRequest('/ledger/transactions/dissolve-samuha/', { method: 'POST' })
+  },
+  payoutReport: async () => {
+    return apiRequest('/ledger/transactions/payout-report/', { method: 'GET' })
   }
 }
 
@@ -457,6 +466,9 @@ export const documentsAPI = {
   },
   getMeetingReport: async (meetingId) => {
     return apiRequest(`/documents/meetings/${meetingId}/report/`, { method: 'GET' })
+  },
+  getLatestPayout: async () => {
+    return apiRequest('/documents/files/latest-payout/', { method: 'GET' })
   }
 }
 

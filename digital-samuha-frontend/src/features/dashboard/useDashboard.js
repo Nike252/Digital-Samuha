@@ -60,8 +60,8 @@ const useDashboard = (role, user, onNavigate) => {
     }
     if (dashboardStats) {
         if (stat.label === 'Total Savings') return { ...stat, value: `Rs. ${dashboardStats.my_savings?.toLocaleString() || '0'}` };
-        if (stat.label === 'Active Loan') return { ...stat, value: `Rs. ${dashboardStats.active_loans_total?.toLocaleString() || '0'}` };
-        if (stat.label === 'Total Members') return { ...stat, value: dashboardStats.total_members?.toString() || '0' };
+        if (stat.label === 'Active Loan') return { ...stat, value: `Rs. ${dashboardStats.my_loan_balance?.toLocaleString() || '0'}` };
+        if (stat.label === 'Total Payout') return { ...stat, value: `Rs. ${dashboardStats.est_payout?.toLocaleString() || '0'}` };
         if (stat.label === 'Pending Samuhas') return { ...stat, value: '0' };
         if (stat.label === 'Active Samuhas') return { ...stat, value: '0' };
     }

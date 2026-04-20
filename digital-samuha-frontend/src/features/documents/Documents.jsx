@@ -1,11 +1,12 @@
 import React from 'react';
-import { FileText, FolderPlus, History, Scale, HandCoins } from 'lucide-react';
+import { FileText, FolderPlus, History, Scale, HandCoins, Landmark } from 'lucide-react';
 import MainLayout from '../../layouts/MainLayout';
 import useDocuments from './useDocuments';
 import ArchiveSection from './ArchiveSection';
 import MeetingsSection from './MeetingsSection';
 import LegalizerSection from './LegalizerSection';
 import LoanRecordsSection from './LoanRecordsSection';
+import PayoutRecordsSection from './PayoutRecordsSection';
 import UploadModal from './UploadModal';
 import MeetingReportModal from './MeetingReportModal';
 
@@ -44,6 +45,7 @@ const Documents = ({ user, onLogout }) => {
             { id: 'archive', label: 'Official Archive', icon: <FileText size={18} /> },
             { id: 'meetings', label: 'Meeting Records', icon: <History size={18} /> },
             { id: 'loans', label: 'Loan Records', icon: <HandCoins size={18} /> },
+            { id: 'payouts', label: 'Payout Records', icon: <Landmark size={18} /> },
             ...((isAdhakshya || user?.role === 'co_adhakshya') ? [{ id: 'legalizer', label: 'Legalizer Tool', icon: <Scale size={18} /> }] : [])
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-3 px-8 py-4 rounded-[24px] font-black text-sm transition-all border-2 ${activeTab === tab.id ? 'bg-gray-900 border-gray-900 text-white shadow-2xl translate-y-[-4px]' : 'bg-white border-gray-100 text-gray-400 hover:border-indigo-200 hover:text-indigo-600'}`}>
@@ -62,6 +64,7 @@ const Documents = ({ user, onLogout }) => {
             {activeTab === 'archive' && <ArchiveSection {...{ searchTerm, setSearchTerm, documents, isAdhakshya, handleDelete }} />}
             {activeTab === 'meetings' && <MeetingsSection {...{ meetings, viewReport }} />}
             {activeTab === 'loans' && <LoanRecordsSection loans={loans} />}
+            {activeTab === 'payouts' && <PayoutRecordsSection documents={documents.filter(d => d.category === 'payout')} handleDelete={handleDelete} isAdhakshya={isAdhakshya} />}
             {activeTab === 'legalizer' && <LegalizerSection {...{ samuhaDetails }} />}
           </div>
         )}

@@ -63,19 +63,28 @@ const useLedger = (user) => {
         subscriptionsAPI.getCurrentSubscription().catch(() => ({ data: null })),
         samuhaAPI.getSettings()
       ]);
-      setStats(statsRes.data);
+      
+      const currentStats = statsRes.data;
+      setStats(currentStats);
       setSubscription(subRes?.data);
       setSamuhaSettings(settingsRes.data);
       setTransactions(txRes.data);
       setLoans(loansRes.data);
       setMembers(membersRes.data);
-      setMeetings(meetingsRes.data);
+
+      // CYCLE FILTERING: Only show meetings from the current cycle in the active view
+      const resetDate = currentStats.last_reset_date ? new Date(currentStats.last_reset_date) : null;
+      const filteredMeetings = resetDate 
+        ? meetingsRes.data.filter(m => new Date(m.date) > resetDate)
+        : meetingsRes.data;
+
+      setMeetings(filteredMeetings);
       
-      const mid = selectedMeetingId || (meetingsRes.data.length > 0 ? meetingsRes.data[0].id : '');
+      const mid = selectedMeetingId || (filteredMeetings.length > 0 ? filteredMeetings[0].id : '');
       if (mid) {
         setSelectedMeetingId(mid);
         setSavingBatch(prev => ({ ...prev, meeting_id: mid }));
-        fetchAttendance(mid, meetingsRes.data);
+        fetchAttendance(mid, meetingsRes.data); //# Still pass full meetings for prevMeeting lookup
       }
     } catch (err) {
       console.error(err);

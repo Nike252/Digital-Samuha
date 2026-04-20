@@ -31,20 +31,26 @@ const useAttendance = (user) => {
       if (isInitial) setLoading(true);
       else setRefreshing(true);
 
-      const [meetingsRes, rulesRes] = await Promise.all([
+      const [meetingsRes, rulesRes, statsRes] = await Promise.all([
         attendanceAPI.getMeetings(),
-        samuhaAPI.getSettings().catch(() => ({ data: null }))
+        samuhaAPI.getSettings().catch(() => ({ data: null })),
+        ledgerAPI.getStats().catch(() => ({ data: { last_reset_date: null } }))
       ]);
       
-      setMeetings(meetingsRes.data);
+      const lastResetDate = statsRes.data?.last_reset_date ? new Date(statsRes.data.last_reset_date) : null;
+      const filteredMeetings = lastResetDate 
+        ? meetingsRes.data.filter(m => new Date(m.date) > lastResetDate)
+        : meetingsRes.data;
+
+      setMeetings(filteredMeetings);
       if (rulesRes.data) {
         setSamuhaRules(rulesRes.data);
         const next = getNextMeetingDate(rulesRes.data);
         setNextMeeting(next);
       }
       
-      if (meetingsRes.data.length > 0 && !selectedMeeting) {
-        handleSelectMeeting(meetingsRes.data[0], isInitial);
+      if (filteredMeetings.length > 0 && !selectedMeeting) {
+        handleSelectMeeting(filteredMeetings[0], isInitial);
       }
     } catch (err) {
       console.error(err);

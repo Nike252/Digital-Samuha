@@ -50,8 +50,8 @@ const Ledger = ({ user, onLogout }) => {
           trend="+5.2%" color="bg-indigo-50" 
         />
         <LedgerStatCard 
-          label="My Total Savings" 
-          value={`NPR ${(stats?.my_savings ?? 0).toLocaleString()}`} 
+          label="Individual Profit Share" 
+          value={`NPR ${(stats?.payout_breakdown?.share_of_profit ?? 0).toLocaleString()}`} 
           icon={<PiggyBank className="text-emerald-600" />} 
           color="bg-emerald-50" 
         />
@@ -83,6 +83,7 @@ const Ledger = ({ user, onLogout }) => {
             txRefs={txRefs} 
             userRole={user.role} 
             onDeleteTransaction={handleDeleteTransaction} 
+            stats={stats}
           />
         )}
         {activeTab === 'savings' && (
