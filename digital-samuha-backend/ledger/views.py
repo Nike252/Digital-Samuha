@@ -41,6 +41,17 @@ class TransactionViewSet(LedgerBaseViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        
+        # CYCLE RESET LOGIC: Only show transactions from the current cycle (after last distribution)
+        samuha, _ = self.get_samuha()
+        last_reset = Transaction.objects.filter(
+            samuha=samuha, type=Transaction.TYPE_DISTRIBUTION
+        ).order_by('-date', '-id').first()
+        
+        if last_reset:
+            # Show the distribution record itself + everything after it
+            qs = qs.filter(date__gte=last_reset.date)
+
         # Support filtering by meeting ID (used by Attendance page)
         meeting_id = self.request.query_params.get('meeting')
         if meeting_id:

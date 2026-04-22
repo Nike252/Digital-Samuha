@@ -14,5 +14,5 @@ class MeetingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Meeting
-        fields = ['id', 'samuha', 'date', 'start_time', 'title', 'description', 'attendance_count', 'created_at']
+        fields = ['id', 'samuha', 'date', 'start_time', 'title', 'description', 'status', 'attendance_count', 'created_at']
         read_only_fields = ['id', 'samuha', 'created_at']

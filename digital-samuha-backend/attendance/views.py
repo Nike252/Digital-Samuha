@@ -15,7 +15,17 @@ class MeetingListView(APIView):
         if not user_membership:
             return Response({"detail": "Active membership required."}, status=status.HTTP_403_FORBIDDEN)
         
+        # CYCLE RESET LOGIC: Find the last distribution date
+        from ledger.models import Transaction
+        last_reset = Transaction.objects.filter(
+            samuha=user_membership.samuha, 
+            type=Transaction.TYPE_DISTRIBUTION
+        ).order_by('-date').first()
+        
         meetings = Meeting.objects.filter(samuha=user_membership.samuha)
+        if last_reset:
+            meetings = meetings.filter(date__gt=last_reset.date)
+            
         serializer = MeetingSerializer(meetings, many=True)
         return Response(serializer.data)
 
@@ -102,17 +112,28 @@ class AttendanceBatchUpdateView(APIView):
 
         records = Attendance.objects.filter(meeting=meeting).select_related('user')
         
-        # If no records exist yet, initialize them for all active members
+        # HOUSEKEEPING: If no records exist in DB, we return a TEMPLATE list of all members
+        # so the frontend can show the table, but we DO NOT call bulk_create yet.
         if not records.exists():
-            active_memberships = Membership.objects.filter(samuha=meeting.samuha, status='active')
-            new_records = [
-                Attendance(meeting=meeting, user=membership.user, status=Attendance.STATUS_PRESENT) 
-                for membership in active_memberships
-            ]
-            Attendance.objects.bulk_create(new_records)
-            records = Attendance.objects.filter(meeting=meeting).select_related('user')
+            active_memberships = Membership.objects.filter(samuha=meeting.samuha, status=Membership.STATUS_ACTIVE)
+            initial_data = []
+            for membership in active_memberships:
+                initial_data.append({
+                    'id': None, # Indicates not yet in DB
+                    'meeting': meeting.id,
+                    'user': membership.user.id,
+                    'user_details': {
+                        'id': membership.user.id,
+                        'full_name': membership.user.full_name,
+                        'phone': membership.user.phone
+                    },
+                    'status': Attendance.STATUS_PRESENT,
+                    'fine_amount': 0.00,
+                    'notes': ''
+                })
+            return Response(initial_data)
 
-        # SMART SYNC: If user has already paid savings for this meeting, mark them as 'present' 
+        # SMART SYNC: If user has already paid savings...
         # (even if they were auto-initialized or saved as absent before).
         from ledger.models import Transaction
         for record in records:
@@ -132,6 +153,15 @@ class AttendanceBatchUpdateView(APIView):
         user_membership = Membership.objects.filter(user=request.user, samuha=meeting.samuha, status=Membership.STATUS_ACTIVE).first()
         if not user_membership or user_membership.role not in [Membership.ROLE_ADHAKSHYA, Membership.ROLE_CO_ADHAKSHYA]:
             return Response({"detail": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
+
+        # INITIALIZATION ON SAVE: If no records exist, create them now during the actual Save
+        if not Attendance.objects.filter(meeting=meeting).exists():
+            active_memberships = Membership.objects.filter(samuha=meeting.samuha, status='active')
+            new_records = [
+                Attendance(meeting=meeting, user=membership.user, status=Attendance.STATUS_PRESENT) 
+                for membership in active_memberships
+            ]
+            Attendance.objects.bulk_create(new_records)
 
         # Additional check for Co-Adhakshya: Cannot update future meetings
         if user_membership.role == Membership.ROLE_CO_ADHAKSHYA:
@@ -197,5 +227,5 @@ class MarkAttendancePresentView(APIView):
             attendance.status = Attendance.STATUS_PRESENT
             attendance.save()
             
-        return Response({"detail": "Attendance marked as present! ✅"})
+        return Response({"detail": "Attendance marked as present!"})
 

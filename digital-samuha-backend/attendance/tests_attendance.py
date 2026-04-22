@@ -127,7 +127,7 @@ class AttendanceTests(APITestCase):
         response = self.client.post(url)
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("active loans exist", str(response.data))
+        self.assertIn("outstanding loans exist", str(response.data))
 
     def test_ut40_dissolution_payout_logic(self):
         """UT-40: Complete Samuha Dissolution with profit sharing"""
@@ -135,7 +135,8 @@ class AttendanceTests(APITestCase):
         Transaction.objects.create(samuha=self.samuha, type='fine', amount=100, description="Profit")
         Transaction.objects.create(samuha=self.samuha, type='fine', amount=100, description="Profit")
         
-        # 2. Member has some savings
+        # 2. Both members have equal savings so they split the 200 profit (100 each)
+        Transaction.objects.create(samuha=self.samuha, user=self.adhakshya, type='saving', amount=500)
         Transaction.objects.create(samuha=self.samuha, user=self.member, type='saving', amount=500)
         
         # 3. Dissolve (No active loans now)
@@ -174,9 +175,9 @@ class AttendanceTests(APITestCase):
         
         report = get_samuha_distribution_preview(self.samuha)
         
-        # 3 members, 300 profit = 100 each
+        # 3 members, 300 profit in total pool
         self.assertEqual(report['member_count'], 3)
-        self.assertEqual(float(report['share_of_profit']), 100.00)
+        self.assertEqual(float(report['current_pool']), 300.00)
 
     def test_ut_42_distribution_archival_record(self):
         """

@@ -85,11 +85,11 @@ const useAttendance = (user) => {
 
   const hasUnsavedChanges = JSON.stringify(attendance) !== JSON.stringify(initialAttendance);
 
-  const handleStatusChange = (recordId, status) => {
+  const handleStatusChange = (recordId, status, userId) => {
     if (status === 'absent') {
-      const record = attendance.find(r => r.id === recordId);
-      const userId = record?.user;
-      const conflictingTx = meetingTransactions.find(tx => tx.user_id === userId && tx.type === 'saving');
+      const record = attendance.find(r => recordId ? r.id === recordId : r.user === userId);
+      const effectiveUserId = userId || record?.user;
+      const conflictingTx = meetingTransactions.find(tx => tx.user_id === effectiveUserId && tx.type === 'saving');
       
       if (conflictingTx) {
         showConfirm({
@@ -106,7 +106,8 @@ const useAttendance = (user) => {
     }
 
     setAttendance(prev => prev.map(rec => {
-      if (rec.id === recordId) {
+      const isMatch = recordId ? rec.id === recordId : rec.user === userId;
+      if (isMatch) {
         let fine = 0;
         const absentFine = samuhaRules?.absent_fine || 100;
         const lateFine = samuhaRules?.late_fine || 50;
@@ -120,10 +121,11 @@ const useAttendance = (user) => {
     }));
   };
 
-  const handleFineChange = (recordId, amount) => {
-    setAttendance(prev => prev.map(rec => 
-      rec.id === recordId ? { ...rec, fine_amount: amount } : rec
-    ));
+  const handleFineChange = (recordId, amount, userId) => {
+    setAttendance(prev => prev.map(rec => {
+      const isMatch = recordId ? rec.id === recordId : rec.user === userId;
+      return isMatch ? { ...rec, fine_amount: amount } : rec;
+    }));
   };
 
   const handleSaveAttendance = async () => {

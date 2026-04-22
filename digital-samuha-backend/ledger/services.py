@@ -357,20 +357,19 @@ def execute_samuha_distribution(samuha, admin_user, is_dissolve=False):
     
     total_active_savings = max(Decimal('0.00'), total_savings_in - total_savings_out)
 
-    # NEW: Total Clearing Logic (Pool = Everything - Total Active Savings)
-    net_dividend_pool = max(Decimal('0.00'), total_fund - total_active_savings)
-
-    # Fallback to Equal Share if savings reset
+    # NEW: Total Fresh Start Logic (Pool = Entire Treasury)
+    # We distribute EVERYTHING proportionally to hit absolute 0.00
+    distribution_pool = total_fund
+    
+    # Check if there are any savings at all to use as a ratio
     use_equal_fallback = (total_active_savings == 0)
     if use_equal_fallback:
          fallback_ratio = Decimal(1) / Decimal(member_count)
 
-    # FINAL TREASURY CHECK
-    total_fund = get_samuha_financial_summary(samuha)
-    required_payout = total_active_savings + net_dividend_pool
-    if required_payout > total_fund:
-         diff = required_payout - total_fund
-         raise ValidationError(f"Treasury Inconsistency: Need NPR {required_payout} for full distribution, but only NPR {total_fund} is available. Shortage: {diff}. Are all loans truly settled?")
+    # FINAL RESET CHECK
+    if distribution_pool > total_fund:
+         diff = distribution_pool - total_fund
+         raise ValidationError(f"Treasury Inconsistency: Need NPR {distribution_pool} for full distribution, but only NPR {total_fund} is available.")
 
     report_data = []
     distributed_dividend_total = Decimal('0.00')
@@ -390,29 +389,32 @@ def execute_samuha_distribution(samuha, admin_user, is_dissolve=False):
         fines = user_txs.filter(type=Transaction.TYPE_FINE).aggregate(sum=Sum('amount'))['sum'] or Decimal('0.00')
         interest = user_txs.filter(type=Transaction.TYPE_INTEREST).aggregate(sum=Sum('amount'))['sum'] or Decimal('0.00')
 
-        # B. Proportional Profit sharing calculation
+        # B. Proportional Fresh-Start calculation
         if is_last_member:
-            # SWEEP LOGIC: Last member gets the exact remaining remainder 
-            # to ensure treasury hits exactly 0.00
-            dividend_per_member = net_dividend_pool - distributed_dividend_total
+            # SWEEP LOGIC: Last member gets every remaining paisa 
+            # to ensures treasury hits exactly 0.00
+            total_user_payout = distribution_pool - distributed_dividend_total
         else:
             if use_equal_fallback:
                 share_ratio = fallback_ratio
             else:
                 share_ratio = (savings / total_active_savings) if total_active_savings > 0 else Decimal('0')
                 
-            dividend_per_member = (net_dividend_pool * share_ratio).quantize(Decimal('0.01'))
-            distributed_dividend_total += dividend_per_member
+            total_user_payout = (distribution_pool * share_ratio).quantize(Decimal('0.01'))
+            distributed_dividend_total += total_user_payout
+
+        # Dividend is the "Profit" part (Payout - Savings)
+        dividend_part = max(Decimal('0.00'), total_user_payout - savings)
 
         # C. Distribution Transactions
-        if dividend_per_member > 0:
+        if dividend_part > 0:
             Transaction.objects.create(
                 samuha=samuha,
                 user=user,
                 type=Transaction.TYPE_DISTRIBUTION,
-                amount=dividend_per_member,
+                amount=dividend_part,
                 date=timezone.now().date(),
-                description=f"{'Final Liquidation Dividend' if is_dissolve else 'Cycle Distribution Share'}"
+                description=f"{'Final Liquidation Dividend' if is_dissolve else 'Cyclical Distribution Profit'}"
             )
 
         if savings > 0:
@@ -422,7 +424,7 @@ def execute_samuha_distribution(samuha, admin_user, is_dissolve=False):
                 type=Transaction.TYPE_LIQUIDATION,
                 amount=savings,
                 date=timezone.now().date(),
-                description=f"{'Final Dissolution' if is_dissolve else 'Cyclical'} Savings Return: NPR {savings}"
+                description=f"{'Final Dissolution' if is_dissolve else 'Cyclical'} Savings Return (Reset)"
             )
 
         report_data.append({
@@ -430,8 +432,8 @@ def execute_samuha_distribution(samuha, admin_user, is_dissolve=False):
             "savings": float(savings),
             "fines": float(fines),
             "interest": float(interest),
-            "dividend": float(dividend_per_member),
-            "total": float(savings + dividend_per_member)
+            "dividend": float(dividend_part),
+            "total": float(total_user_payout)
         })
 
         if is_dissolve:

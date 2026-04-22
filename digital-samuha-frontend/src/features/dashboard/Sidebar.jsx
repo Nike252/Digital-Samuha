@@ -24,7 +24,8 @@ const Sidebar = ({ menuItems, onNavigate, currentPath, isDark, isOpen, onClose }
       )}
 
       {/* Sidebar Content */}
-      <aside className={`w-64 ${bgClass} border-r h-screen fixed left-0 top-0 flex flex-col font-sans transition-transform duration-300 ease-in-out z-50 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`w-64 ${bgClass} border-r h-screen fixed left-0 top-0 flex flex-col font-sans transition-transform duration-300 ease-in-out z-50 ${isOpen ? 
+        'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className={`px-4 py-3 border-b ${isDark ? 'border-gray-800/50' : 'border-gray-100'} flex items-center justify-between`}>
           <img src={logo} alt="Digital Samuha" className="h-12 object-contain" />
           {/* Mobile Close Button */}

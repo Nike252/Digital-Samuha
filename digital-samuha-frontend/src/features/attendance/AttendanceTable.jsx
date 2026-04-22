@@ -36,7 +36,7 @@ const AttendanceTable = ({
                   {STATUS_OPTIONS.map(opt => (
                     <button
                       key={opt.value}
-                      onClick={() => canEdit && handleStatusChange(record.id, opt.value)}
+                      onClick={() => canEdit && handleStatusChange(record.id, opt.value, record.user)}
                       disabled={!canEdit}
                       className={`p-2 rounded-lg transition-all flex items-center gap-2 ${
                         record.status === opt.value 
@@ -57,7 +57,7 @@ const AttendanceTable = ({
                   <input 
                     type="number" 
                     value={record.fine_amount}
-                    onChange={(e) => canEdit && handleFineChange(record.id, e.target.value)}
+                    onChange={(e) => canEdit && handleFineChange(record.id, e.target.value, record.user)}
                     disabled={!canEdit}
                     className={`w-24 px-3 py-1.5 border border-gray-100 bg-gray-50/50 rounded-lg text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all ${
                       !canEdit ? 'cursor-not-allowed opacity-70' : ''

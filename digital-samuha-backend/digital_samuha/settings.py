@@ -171,6 +171,12 @@ STORAGES = {
     },
 }
 
+# 🛠️ DEPLOYMENT PATCH: Legacy Storage Support
+# Django 4.2+ uses 'STORAGES' but django-cloudinary-storage 
+# commands still look for these old settings during 'collectstatic'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.RawMediaCloudinaryStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -222,6 +228,7 @@ else:
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://192.168.100.133:5173",
+        "https://digital-samuha.vercel.app",
     ] + [o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
 
 CORS_ALLOW_CREDENTIALS = True
